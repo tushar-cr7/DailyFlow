@@ -6,7 +6,7 @@ import {
   validateTaskFilter,
 } from '../src/shared/utils/validation';
 
-describe('Task Input Boundary Validation (Phase 4)', () => {
+describe('Task Input Boundary Validation (Phase 5)', () => {
   describe('validateCreateTaskInput', () => {
     it('accepts valid createTask payload', () => {
       const res = validateCreateTaskInput({
@@ -81,10 +81,22 @@ describe('Task Input Boundary Validation (Phase 4)', () => {
   });
 
   describe('validateTaskFilter', () => {
-    it('accepts valid task filter', () => {
-      const res = validateTaskFilter({ date: '2026-08-10' });
+    it('accepts valid task filter with date ranges', () => {
+      const res = validateTaskFilter({
+        startDate: '2026-08-11',
+        endDate: '2026-08-17',
+        isCompleted: false,
+      });
       expect(res.valid).toBe(true);
-      expect(res.data?.date).toBe('2026-08-10');
+      expect(res.data?.startDate).toBe('2026-08-11');
+      expect(res.data?.endDate).toBe('2026-08-17');
+      expect(res.data?.isCompleted).toBe(false);
+    });
+
+    it('rejects invalid startDate or endDate', () => {
+      const res = validateTaskFilter({ startDate: 'invalid-date' });
+      expect(res.valid).toBe(false);
+      expect(res.error).toContain('YYYY-MM-DD');
     });
 
     it('accepts undefined filter', () => {

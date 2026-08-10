@@ -1,67 +1,101 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Task } from '@shared/types/task';
 import type { SystemInfoResponse, DatabaseStatus, IpcResult } from '@shared/types/ipc';
+import { getTodayString, getCurrentTimeString, shiftDateString, classifyTask } from '@shared/utils/date';
+import { DateNavigator } from './components/DateNavigator';
+import { ViewTabs, type ActiveView } from './components/ViewTabs';
+import { OverdueBanner } from './components/OverdueBanner';
 import { TaskList } from './components/TaskList';
 import { TaskFormModal } from './components/TaskFormModal';
 
-function getTodayString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function shiftDate(dateStr: string, days: number): string {
-  const parts = dateStr.split('-').map(Number);
-  const y = parts[0] ?? 2026;
-  const m = parts[1] ?? 1;
-  const d = parts[2] ?? 1;
-  const date = new Date(y, m - 1, d);
-  date.setDate(date.getDate() + days);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 function App() {
   const api = window.dailyflow;
+  const [activeView, setActiveView] = useState<ActiveView>('today');
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [allIncompleteTasks, setAllIncompleteTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
-  // Modal State
+  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Phase 2 / Phase 3 verification state
+  // Health check state
   const [ipcResult, setIpcResult] = useState<IpcResult<SystemInfoResponse> | null>(null);
   const [dbResult, setDbResult] = useState<IpcResult<DatabaseStatus> | null>(null);
   const [loadingIpc, setLoadingIpc] = useState(false);
   const [loadingDb, setLoadingDb] = useState(false);
 
-  const fetchTasks = useCallback(async (date: string) => {
+  const currentDateStr = getTodayString();
+  const currentTimeStr = getCurrentTimeString();
+
+  // Fetch tasks based on active view
+  const fetchTasks = useCallback(async () => {
     setLoadingTasks(true);
     setTaskError(null);
     try {
-      const res = await api.getTasks({ date });
-      if (res.success && res.data) {
-        setTasks(res.data);
-      } else {
-        setTaskError(res.error || 'Failed to load tasks');
+      if (activeView === 'today') {
+        const res = await api.getTasks({ date: selectedDate });
+        if (res.success && res.data) {
+          setTasks(res.data);
+        } else {
+          setTaskError(res.error || 'Failed to load tasks for selected date');
+        }
+      } else if (activeView === 'upcoming') {
+        const tomorrowStr = shiftDateString(currentDateStr, 1);
+        const sevenDaysEndStr = shiftDateString(currentDateStr, 7);
+        const res = await api.getTasks({
+          startDate: tomorrowStr,
+          endDate: sevenDaysEndStr,
+          isCompleted: false,
+        });
+        if (res.success && res.data) {
+          setTasks(res.data);
+        } else {
+          setTaskError(res.error || 'Failed to load upcoming tasks');
+        }
+      } else if (activeView === 'overdue') {
+        // Fetch all incomplete tasks to classify overdue items deterministically
+        const res = await api.getTasks({ isCompleted: false });
+        if (res.success && res.data) {
+          const overdueTasks = res.data.filter(
+            (t) => classifyTask(t, currentDateStr, currentTimeStr) === 'overdue',
+          );
+          setTasks(overdueTasks);
+        } else {
+          setTaskError(res.error || 'Failed to load overdue tasks');
+        }
       }
     } catch (err) {
-      setTaskError(err instanceof Error ? err.message : 'Failed to load tasks');
+      setTaskError(err instanceof Error ? err.message : 'Failed to fetch tasks');
     } finally {
       setLoadingTasks(false);
+    }
+  }, [api, activeView, selectedDate, currentDateStr, currentTimeStr]);
+
+  // Fetch all incomplete tasks in background to compute global overdue badge count
+  const checkOverdueCount = useCallback(async () => {
+    try {
+      const res = await api.getTasks({ isCompleted: false });
+      if (res.success && res.data) {
+        setAllIncompleteTasks(res.data);
+      }
+    } catch {
+      // Ignore background check failure
     }
   }, [api]);
 
   useEffect(() => {
-    void fetchTasks(selectedDate);
-  }, [selectedDate, fetchTasks]);
+    void fetchTasks();
+    void checkOverdueCount();
+  }, [fetchTasks, checkOverdueCount]);
+
+  const overdueTasksCount = useMemo(() => {
+    return allIncompleteTasks.filter(
+      (t) => classifyTask(t, currentDateStr, currentTimeStr) === 'overdue',
+    ).length;
+  }, [allIncompleteTasks, currentDateStr, currentTimeStr]);
 
   const handleToggleComplete = async (task: Task) => {
     try {
@@ -70,9 +104,10 @@ function App() {
         isCompleted: !task.isCompleted,
       });
       if (res.success) {
-        await fetchTasks(selectedDate);
+        await fetchTasks();
+        await checkOverdueCount();
       } else {
-        setTaskError(res.error || 'Failed to toggle task status');
+        setTaskError(res.error || 'Failed to toggle task completion');
       }
     } catch (err) {
       setTaskError(err instanceof Error ? err.message : 'Error updating task');
@@ -93,7 +128,8 @@ function App() {
     try {
       const res = await api.deleteTask(id);
       if (res.success) {
-        await fetchTasks(selectedDate);
+        await fetchTasks();
+        await checkOverdueCount();
       } else {
         setTaskError(res.error || 'Failed to delete task');
       }
@@ -122,7 +158,8 @@ function App() {
         throw new Error(res.error || 'Failed to create task');
       }
     }
-    await fetchTasks(selectedDate);
+    await fetchTasks();
+    await checkOverdueCount();
   };
 
   // Verification handlers
@@ -166,7 +203,7 @@ function App() {
               DailyFlow
             </p>
             <h1 className="mt-0.5 text-xl font-bold tracking-tight text-slate-900">
-              Daily Scheduler & Tasks
+              Productivity & Daily Scheduler
             </h1>
           </div>
           <button
@@ -180,46 +217,26 @@ function App() {
       </header>
 
       {/* Main Body */}
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-8 py-8 space-y-8">
-        {/* Date Selector Navigation Bar */}
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedDate((d) => shiftDate(d, -1))}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              ← Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedDate(getTodayString())}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedDate((d) => shiftDate(d, 1))}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Next →
-            </button>
-          </div>
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-8 py-8 space-y-6">
+        {/* Overdue Banner */}
+        {activeView !== 'overdue' && (
+          <OverdueBanner
+            overdueCount={overdueTasksCount}
+            onViewOverdue={() => setActiveView('overdue')}
+          />
+        )}
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="active-date-picker" className="text-xs font-medium text-slate-500">
-              Date:
-            </label>
-            <input
-              id="active-date-picker"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-indigo-500 focus:outline-none"
-            />
-          </div>
-        </section>
+        {/* View Switcher Tabs */}
+        <ViewTabs
+          activeView={activeView}
+          overdueCount={overdueTasksCount}
+          onViewChange={setActiveView}
+        />
+
+        {/* Date Navigator - Single Source of Truth */}
+        {activeView === 'today' && (
+          <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        )}
 
         {/* Task List Section */}
         <section className="space-y-4">
@@ -232,6 +249,9 @@ function App() {
           <TaskList
             tasks={tasks}
             loading={loadingTasks}
+            viewMode={activeView === 'today' ? 'single-date' : activeView}
+            currentDateStr={currentDateStr}
+            currentTimeStr={currentTimeStr}
             onToggleComplete={handleToggleComplete}
             onEdit={handleOpenEditModal}
             onDelete={handleDeleteTask}
@@ -239,14 +259,14 @@ function App() {
           />
         </section>
 
-        {/* Phase 2 & 3 System Verification Panel */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-800 uppercase tracking-wider text-slate-400">
+        {/* Health Verification Panel */}
+        <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             System & Infrastructure Health Verification
           </h2>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Phase 3 Database Health Check */}
+            {/* Database Status */}
             <div className="rounded-lg border border-slate-100 p-4 bg-slate-50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-slate-700">SQLite Database Status</span>
@@ -266,7 +286,7 @@ function App() {
               )}
             </div>
 
-            {/* Phase 2 System Info Check */}
+            {/* IPC Status */}
             <div className="rounded-lg border border-slate-100 p-4 bg-slate-50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-slate-700">Typed IPC Bridge Status</span>

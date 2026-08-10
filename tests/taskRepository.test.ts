@@ -9,7 +9,7 @@ import {
   getTaskById,
 } from '../src/main/database/taskRepository';
 
-describe('TaskRepository CRUD & Ordering (Phase 4)', () => {
+describe('TaskRepository CRUD, Range Queries & Ordering (Phase 5)', () => {
   let db: Database.Database;
 
   beforeEach(() => {
@@ -54,6 +54,25 @@ describe('TaskRepository CRUD & Ordering (Phase 4)', () => {
     expect(tasks[0]?.title).toBe('Task at 09:00');
     expect(tasks[1]?.title).toBe('Task at 14:00');
     expect(tasks[2]?.title).toBe('Task without time');
+  });
+
+  it('fetches tasks within a date range (startDate to endDate)', () => {
+    createTask({ title: 'Task 1 (Aug 10)', date: '2026-08-10' }, db);
+    createTask({ title: 'Task 2 (Aug 11)', date: '2026-08-11' }, db);
+    createTask({ title: 'Task 3 (Aug 15)', date: '2026-08-15' }, db);
+    createTask({ title: 'Task 4 (Aug 20)', date: '2026-08-20' }, db);
+
+    const rangeTasks = getAllTasks(
+      {
+        startDate: '2026-08-11',
+        endDate: '2026-08-17',
+      },
+      db,
+    );
+
+    expect(rangeTasks).toHaveLength(2);
+    expect(rangeTasks[0]?.title).toBe('Task 2 (Aug 11)');
+    expect(rangeTasks[1]?.title).toBe('Task 3 (Aug 15)');
   });
 
   it('updates task properties including completion status via updateTask', () => {

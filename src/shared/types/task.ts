@@ -1,3 +1,11 @@
+export type ScheduleStatus =
+  | 'completed'
+  | 'overdue'
+  | 'today'
+  | 'upcoming'
+  | 'future'
+  | 'unscheduled';
+
 export interface Task {
   id: string;
   title: string;
@@ -26,6 +34,9 @@ export interface UpdateTaskDTO {
 }
 
 export interface TaskFilter {
-  date?: string;
+  date?: string; // Specific date: YYYY-MM-DD
+  startDate?: string; // Date range start: YYYY-MM-DD
+  endDate?: string; // Date range end: YYYY-MM-DD
   isCompleted?: boolean;
+  overdueOnly?: boolean;
 }

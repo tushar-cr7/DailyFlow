@@ -1,4 +1,5 @@
 import type { CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../types/task';
+import { isValidDateString, isValidTimeString } from './date';
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -23,19 +24,6 @@ export function validateSystemInfoRequest(input: unknown): ValidationResult {
     }
   }
   return { valid: true };
-}
-
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-export function isValidDateString(dateStr: string): boolean {
-  if (!DATE_REGEX.test(dateStr)) return false;
-  const date = new Date(dateStr);
-  return !isNaN(date.getTime());
-}
-
-export function isValidTimeString(timeStr: string): boolean {
-  return TIME_REGEX.test(timeStr);
 }
 
 export function validateCreateTaskInput(input: unknown): { valid: boolean; error?: string; data?: CreateTaskDTO } {
@@ -175,11 +163,32 @@ export function validateTaskFilter(input: unknown): { valid: boolean; error?: st
     data.date = input.date;
   }
 
+  if (input.startDate !== undefined && input.startDate !== null && input.startDate !== '') {
+    if (typeof input.startDate !== 'string' || !isValidDateString(input.startDate)) {
+      return { valid: false, error: 'Filter startDate must be formatted as YYYY-MM-DD' };
+    }
+    data.startDate = input.startDate;
+  }
+
+  if (input.endDate !== undefined && input.endDate !== null && input.endDate !== '') {
+    if (typeof input.endDate !== 'string' || !isValidDateString(input.endDate)) {
+      return { valid: false, error: 'Filter endDate must be formatted as YYYY-MM-DD' };
+    }
+    data.endDate = input.endDate;
+  }
+
   if (input.isCompleted !== undefined && input.isCompleted !== null) {
     if (typeof input.isCompleted !== 'boolean') {
       return { valid: false, error: 'Filter isCompleted must be a boolean' };
     }
     data.isCompleted = input.isCompleted;
+  }
+
+  if (input.overdueOnly !== undefined && input.overdueOnly !== null) {
+    if (typeof input.overdueOnly !== 'boolean') {
+      return { valid: false, error: 'Filter overdueOnly must be a boolean' };
+    }
+    data.overdueOnly = input.overdueOnly;
   }
 
   return { valid: true, data };

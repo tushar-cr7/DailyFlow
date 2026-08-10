@@ -29,14 +29,31 @@ function mapRowToTask(row: TaskRow): Task {
 
 export function getAllTasks(filter?: TaskFilter, customDb?: Database.Database): Task[] {
   const db = customDb || getDatabase();
-  const targetDate = filter?.date || null;
-
-  let query = 'SELECT * FROM tasks';
+  const conditions: string[] = [];
   const params: unknown[] = [];
 
-  if (targetDate) {
-    query += ' WHERE date = ?';
-    params.push(targetDate);
+  if (filter?.date) {
+    conditions.push('date = ?');
+    params.push(filter.date);
+  } else {
+    if (filter?.startDate) {
+      conditions.push('date >= ?');
+      params.push(filter.startDate);
+    }
+    if (filter?.endDate) {
+      conditions.push('date <= ?');
+      params.push(filter.endDate);
+    }
+  }
+
+  if (filter?.isCompleted !== undefined) {
+    conditions.push('is_completed = ?');
+    params.push(filter.isCompleted ? 1 : 0);
+  }
+
+  let query = 'SELECT * FROM tasks';
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
   }
 
   query += ' ORDER BY date ASC, scheduled_time ASC NULLS LAST, created_at ASC';
