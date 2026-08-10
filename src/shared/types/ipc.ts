@@ -1,3 +1,5 @@
+export * from './database';
+
 export interface SystemInfoRequest {
   includeEnv?: boolean;
 }

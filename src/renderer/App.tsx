@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import type { SystemInfoResponse, IpcResult } from '@shared/types/ipc';
+import type { SystemInfoResponse, DatabaseStatus, IpcResult } from '@shared/types/ipc';
 
 function App() {
   const api = window.dailyflow;
   const [ipcResult, setIpcResult] = useState<IpcResult<SystemInfoResponse> | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [dbResult, setDbResult] = useState<IpcResult<DatabaseStatus> | null>(null);
+  const [loadingIpc, setLoadingIpc] = useState(false);
+  const [loadingDb, setLoadingDb] = useState(false);
 
   const handleTestIpc = async () => {
-    setLoading(true);
+    setLoadingIpc(true);
     try {
       const res = await api.getSystemInfo({ includeEnv: false });
       setIpcResult(res);
@@ -17,7 +19,22 @@ function App() {
         error: err instanceof Error ? err.message : 'IPC call failed',
       });
     } finally {
-      setLoading(false);
+      setLoadingIpc(false);
+    }
+  };
+
+  const handleTestDb = async () => {
+    setLoadingDb(true);
+    try {
+      const res = await api.getDatabaseStatus();
+      setDbResult(res);
+    } catch (err) {
+      setDbResult({
+        success: false,
+        error: err instanceof Error ? err.message : 'Database status IPC call failed',
+      });
+    } finally {
+      setLoadingDb(false);
     }
   };
 
@@ -30,7 +47,7 @@ function App() {
               DailyFlow
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-              Phase 2 — Electron Security Architecture
+              Phase 3 — SQLite Persistence
             </h1>
           </div>
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
@@ -42,14 +59,11 @@ function App() {
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-8 py-12">
         <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
           <h2 className="text-lg font-medium text-slate-800">
-            Typed IPC Architecture Verification
+            SQLite Database & IPC Bridge Verification
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            The renderer process uses a strongly-typed IPC context bridge. Raw
-            <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 font-mono text-xs">
-              ipcRenderer
-            </code>
-            is kept private inside preload and is not exposed to the window object.
+            SQLite runs exclusively in the Electron Main process using better-sqlite3.
+            The renderer communicates via typed IPC and cannot access SQLite or Node.js directly.
           </p>
 
           <dl className="mt-6 grid gap-3 text-sm">
@@ -73,7 +87,35 @@ function App() {
             </div>
           </dl>
 
-          {/* Minimal IPC Verification Trigger */}
+          {/* Phase 3 Database Health Verification */}
+          <div className="mt-6 border-t border-slate-100 pt-6">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">
+                Check SQLite Database Health (database:get-status)
+              </span>
+              <button
+                type="button"
+                onClick={handleTestDb}
+                disabled={loadingDb}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50"
+              >
+                {loadingDb ? 'Checking DB...' : 'Check Database'}
+              </button>
+            </div>
+
+            {dbResult && (
+              <div className="mt-4 rounded-lg bg-slate-900 p-4 text-xs font-mono text-slate-200">
+                <div className="text-emerald-400 font-bold mb-2">
+                  Database Status Result: {dbResult.success ? 'INITIALIZED & HEALTHY' : 'FAILED'}
+                </div>
+                <pre className="overflow-x-auto whitespace-pre-wrap">
+                  {JSON.stringify(dbResult, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+
+          {/* Phase 2 IPC System Info Verification */}
           <div className="mt-6 border-t border-slate-100 pt-6">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">
@@ -82,10 +124,10 @@ function App() {
               <button
                 type="button"
                 onClick={handleTestIpc}
-                disabled={loading}
+                disabled={loadingIpc}
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
               >
-                {loading ? 'Invoking IPC...' : 'Invoke IPC'}
+                {loadingIpc ? 'Invoking IPC...' : 'Invoke IPC'}
               </button>
             </div>
 

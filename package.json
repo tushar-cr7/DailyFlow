@@ -17,10 +17,13 @@
     "package": "npm run build && electron-builder --win"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^26.2.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",

@@ -5,3 +5,8 @@ release/
 *.log
 .DS_Store
 *.local
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db

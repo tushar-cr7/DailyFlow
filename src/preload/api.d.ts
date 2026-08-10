@@ -1,4 +1,5 @@
 import type { SystemInfoRequest, SystemInfoResponse, IpcResult } from '../shared/types/ipc';
+import type { DatabaseStatus } from '../shared/types/database';
 
 export interface DailyFlowAPI {
   platform: string;
@@ -9,6 +10,7 @@ export interface DailyFlowAPI {
   };
   isSecureContext: boolean;
   getSystemInfo: (request?: SystemInfoRequest) => Promise<IpcResult<SystemInfoResponse>>;
+  getDatabaseStatus: () => Promise<IpcResult<DatabaseStatus>>;
 }
 
 declare global {

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { registerIpcHandlers } from './ipc';
+import { initDatabase, closeDatabase } from './database/connection';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,6 +60,7 @@ function createWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  initDatabase();
   registerIpcHandlers();
   createWindow();
 
@@ -73,4 +75,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  closeDatabase();
 });
