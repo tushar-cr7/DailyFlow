@@ -10,12 +10,12 @@ export function DateNavigator({ selectedDate, onDateChange }: DateNavigatorProps
   const isToday = selectedDate === todayStr;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between flex-wrap gap-4">
+    <div className="glass-panel rounded-2xl p-4 shadow-xl flex items-center justify-between flex-wrap gap-4">
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => onDateChange(shiftDateString(selectedDate, -1))}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-slate-700/60 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm active:scale-95"
           title="Previous day"
         >
           ← Prev
@@ -24,10 +24,10 @@ export function DateNavigator({ selectedDate, onDateChange }: DateNavigatorProps
           type="button"
           onClick={() => onDateChange(todayStr)}
           disabled={isToday}
-          className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${
+          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all shadow-sm ${
             isToday
-              ? 'border-indigo-200 bg-indigo-50 text-indigo-700 cursor-default'
-              : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 cursor-default'
+              : 'border border-slate-700/60 bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white active:scale-95'
           }`}
         >
           Today
@@ -35,7 +35,7 @@ export function DateNavigator({ selectedDate, onDateChange }: DateNavigatorProps
         <button
           type="button"
           onClick={() => onDateChange(shiftDateString(selectedDate, 1))}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-slate-700/60 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm active:scale-95"
           title="Next day"
         >
           Next →
@@ -43,7 +43,7 @@ export function DateNavigator({ selectedDate, onDateChange }: DateNavigatorProps
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="text-xs font-semibold text-slate-600">
+        <span className="text-xs font-bold text-slate-200 tracking-wide">
           {formatDisplayDate(selectedDate, todayStr)}
         </span>
         <input
@@ -56,7 +56,7 @@ export function DateNavigator({ selectedDate, onDateChange }: DateNavigatorProps
               onDateChange(e.target.value);
             }
           }}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-indigo-500 focus:outline-none"
+          className="rounded-lg border border-slate-700/80 bg-slate-900/90 px-3 py-1.5 text-xs font-medium text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </div>
     </div>

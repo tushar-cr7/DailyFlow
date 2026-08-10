@@ -21,7 +21,8 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Health check state
+  // Health check collapsible drawer state
+  const [showHealthPanel, setShowHealthPanel] = useState(false);
   const [ipcResult, setIpcResult] = useState<IpcResult<SystemInfoResponse> | null>(null);
   const [dbResult, setDbResult] = useState<IpcResult<DatabaseStatus> | null>(null);
   const [loadingIpc, setLoadingIpc] = useState(false);
@@ -56,7 +57,6 @@ function App() {
           setTaskError(res.error || 'Failed to load upcoming tasks');
         }
       } else if (activeView === 'overdue') {
-        // Fetch all incomplete tasks to classify overdue items deterministically
         const res = await api.getTasks({ isCompleted: false });
         if (res.success && res.data) {
           const overdueTasks = res.data.filter(
@@ -96,6 +96,15 @@ function App() {
       (t) => classifyTask(t, currentDateStr, currentTimeStr) === 'overdue',
     ).length;
   }, [allIncompleteTasks, currentDateStr, currentTimeStr]);
+
+  // Active day completion metrics
+  const activeDayMetrics = useMemo(() => {
+    if (activeView !== 'today') return null;
+    const total = tasks.length;
+    const completed = tasks.filter((t) => t.isCompleted).length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, percent };
+  }, [activeView, tasks]);
 
   const handleToggleComplete = async (task: Task) => {
     try {
@@ -162,7 +171,7 @@ function App() {
     await checkOverdueCount();
   };
 
-  // Verification handlers
+  // Health verification handlers
   const handleTestIpc = async () => {
     setLoadingIpc(true);
     try {
@@ -194,31 +203,60 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
-      {/* App Header */}
-      <header className="border-b border-slate-200 bg-white px-8 py-5">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-              DailyFlow
-            </p>
-            <h1 className="mt-0.5 text-xl font-bold tracking-tight text-slate-900">
-              Productivity & Daily Scheduler
-            </h1>
+    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 text-sm">
+              DF
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-bold tracking-tight text-slate-100">DailyFlow</h1>
+                <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400 border border-indigo-500/20">
+                  Desktop Scheduler
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-400">
+                Timezone-Safe Core Task Management
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={handleOpenCreateModal}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500"
-          >
-            + New Task
-          </button>
+
+          <div className="flex items-center gap-4">
+            {/* Active Day Progress Indicator */}
+            {activeDayMetrics && activeDayMetrics.total > 0 && (
+              <div className="hidden sm:flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-1.5 shadow-inner">
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Progress</p>
+                  <p className="text-xs font-bold text-indigo-400">
+                    {activeDayMetrics.completed}/{activeDayMetrics.total} Done
+                  </p>
+                </div>
+                <div className="h-2 w-16 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300"
+                    style={{ width: `${activeDayMetrics.percent}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleOpenCreateModal}
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-95 transition-all"
+            >
+              + New Task
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Main Body */}
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-8 py-8 space-y-6">
-        {/* Overdue Banner */}
+      {/* Main Container */}
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-6 space-y-6">
+        {/* Overdue Alert Banner */}
         {activeView !== 'overdue' && (
           <OverdueBanner
             overdueCount={overdueTasksCount}
@@ -238,10 +276,10 @@ function App() {
           <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
         )}
 
-        {/* Task List Section */}
+        {/* Task List Canvas */}
         <section className="space-y-4">
           {taskError && (
-            <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 border border-red-100">
+            <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300 font-medium">
               {taskError}
             </div>
           )}
@@ -259,55 +297,71 @@ function App() {
           />
         </section>
 
-        {/* Health Verification Panel */}
-        <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-            System & Infrastructure Health Verification
-          </h2>
+        {/* Collapsible System Health Verification Drawer */}
+        <section className="mt-8 border-t border-slate-900 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowHealthPanel((prev) => !prev)}
+            className="flex items-center justify-between w-full text-left py-2 px-3 rounded-lg hover:bg-slate-900/60 transition-colors"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <span>🛠️ Phase 2/3 System Health Diagnostics</span>
+              <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 font-mono">
+                IPC & Database
+              </span>
+            </span>
+            <span className="text-xs text-slate-400 font-bold">
+              {showHealthPanel ? 'Hide ▲' : 'Show ▼'}
+            </span>
+          </button>
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Database Status */}
-            <div className="rounded-lg border border-slate-100 p-4 bg-slate-50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-700">SQLite Database Status</span>
-                <button
-                  type="button"
-                  onClick={handleTestDb}
-                  disabled={loadingDb}
-                  className="rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-                >
-                  {loadingDb ? 'Checking...' : 'Check DB'}
-                </button>
+          {showHealthPanel && (
+            <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 animate-card-enter">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Database Status */}
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-300">SQLite Database Status</span>
+                    <button
+                      type="button"
+                      onClick={handleTestDb}
+                      disabled={loadingDb}
+                      className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50 transition-all"
+                    >
+                      {loadingDb ? 'Checking...' : 'Check DB'}
+                    </button>
+                  </div>
+                  {dbResult && (
+                    <pre className="mt-2 text-xs font-mono bg-slate-900 text-slate-300 p-3 rounded-lg border border-slate-800 overflow-x-auto">
+                      {JSON.stringify(dbResult, null, 2)}
+                    </pre>
+                  )}
+                </div>
+
+                {/* IPC Status */}
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-300">Typed IPC Bridge Status</span>
+                    <button
+                      type="button"
+                      onClick={handleTestIpc}
+                      disabled={loadingIpc}
+                      className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-all"
+                    >
+                      {loadingIpc ? 'Invoking...' : 'Invoke IPC'}
+                    </button>
+                  </div>
+                  {ipcResult && (
+                    <pre className="mt-2 text-xs font-mono bg-slate-900 text-slate-300 p-3 rounded-lg border border-slate-800 overflow-x-auto">
+                      {JSON.stringify(ipcResult, null, 2)}
+                    </pre>
+                  )}
+                </div>
               </div>
-              {dbResult && (
-                <pre className="mt-2 text-xs font-mono bg-slate-900 text-slate-200 p-2.5 rounded overflow-x-auto">
-                  {JSON.stringify(dbResult, null, 2)}
-                </pre>
-              )}
-            </div>
 
-            {/* IPC Status */}
-            <div className="rounded-lg border border-slate-100 p-4 bg-slate-50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-700">Typed IPC Bridge Status</span>
-                <button
-                  type="button"
-                  onClick={handleTestIpc}
-                  disabled={loadingIpc}
-                  className="rounded bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-                >
-                  {loadingIpc ? 'Invoking...' : 'Invoke IPC'}
-                </button>
-              </div>
-              {ipcResult && (
-                <pre className="mt-2 text-xs font-mono bg-slate-900 text-slate-200 p-2.5 rounded overflow-x-auto">
-                  {JSON.stringify(ipcResult, null, 2)}
-                </pre>
-              )}
+              <SecurityCheck />
             </div>
-          </div>
-
-          <SecurityCheck />
+          )}
         </section>
       </main>
 
@@ -332,26 +386,26 @@ function SecurityCheck() {
     typeof (window as Window & { ipcRenderer?: unknown }).ipcRenderer !== 'undefined';
 
   return (
-    <div className="mt-6 border-t border-slate-200 pt-4">
-      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-        Security Sanity Checks
+    <div className="border-t border-slate-800 pt-3">
+      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        Electron Security Boundary Status
       </h3>
-      <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         <div className="flex items-center gap-1.5">
           <StatusBadge ok={!nodeAccessible} />
-          <span>Require Blocked</span>
+          <span className="text-slate-300 text-[11px]">Require Blocked</span>
         </div>
         <div className="flex items-center gap-1.5">
           <StatusBadge ok={!processAccessible} />
-          <span>Process Blocked</span>
+          <span className="text-slate-300 text-[11px]">Process Blocked</span>
         </div>
         <div className="flex items-center gap-1.5">
           <StatusBadge ok={!ipcRendererAccessible} />
-          <span>ipcRenderer Blocked</span>
+          <span className="text-slate-300 text-[11px]">ipcRenderer Blocked</span>
         </div>
         <div className="flex items-center gap-1.5">
           <StatusBadge ok={typeof window.dailyflow !== 'undefined'} />
-          <span>contextBridge Active</span>
+          <span className="text-slate-300 text-[11px]">contextBridge Active</span>
         </div>
       </div>
     </div>
@@ -362,7 +416,7 @@ function StatusBadge({ ok }: { ok: boolean }) {
   return (
     <span
       className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${
-        ok ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+        ok ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
       }`}
     >
       {ok ? '✓' : '✗'}

@@ -23,10 +23,10 @@ export function SchedulingSection({
   if (tasks.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+    <div className="space-y-2.5">
+      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between px-1">
         <span>{title}</span>
-        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] text-slate-700 font-bold">
+        <span className="rounded-full bg-slate-800 border border-slate-700/60 px-2 py-0.5 text-[10px] text-slate-300 font-bold">
           {tasks.length}
         </span>
       </h4>

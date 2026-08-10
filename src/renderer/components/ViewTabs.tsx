@@ -8,43 +8,47 @@ interface ViewTabsProps {
 
 export function ViewTabs({ activeView, overdueCount, onViewChange }: ViewTabsProps) {
   return (
-    <div className="flex items-center gap-2 border-b border-slate-200 pb-px">
+    <div className="flex items-center rounded-xl bg-slate-900/80 p-1.5 border border-slate-800 shadow-inner">
       <button
         type="button"
         onClick={() => onViewChange('today')}
-        className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+        className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
           activeView === 'today'
-            ? 'border-indigo-600 bg-white text-indigo-600 shadow-sm'
-            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
+            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
         }`}
       >
-        Today / Selected Day
+        <span>📅 Today / Date</span>
       </button>
 
       <button
         type="button"
         onClick={() => onViewChange('upcoming')}
-        className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+        className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
           activeView === 'upcoming'
-            ? 'border-indigo-600 bg-white text-indigo-600 shadow-sm'
-            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
+            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
         }`}
       >
-        Upcoming (Next 7 Days)
+        <span>🚀 Upcoming (7 Days)</span>
       </button>
 
       <button
         type="button"
         onClick={() => onViewChange('overdue')}
-        className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+        className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
           activeView === 'overdue'
-            ? 'border-amber-600 bg-white text-amber-700 shadow-sm'
-            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
+            ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
         }`}
       >
-        <span>Overdue</span>
+        <span>⚠️ Overdue</span>
         {overdueCount > 0 && (
-          <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              activeView === 'overdue' ? 'bg-white text-rose-700' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+            }`}
+          >
             {overdueCount}
           </span>
         )}
