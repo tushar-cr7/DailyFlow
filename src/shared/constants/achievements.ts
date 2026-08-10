@@ -1,0 +1,68 @@
+import type { AchievementDefinition } from '../types/engagement';
+
+export const INITIAL_ACHIEVEMENTS: AchievementDefinition[] = [
+  {
+    id: 'first_step',
+    title: 'First Step',
+    description: 'Complete your first task',
+    category: 'completion',
+    targetValue: 1,
+    xpBonus: 20,
+  },
+  {
+    id: 'task_master_10',
+    title: 'Getting Busy',
+    description: 'Complete 10 total tasks',
+    category: 'completion',
+    targetValue: 10,
+    xpBonus: 50,
+  },
+  {
+    id: 'task_master_50',
+    title: 'Productivity Machine',
+    description: 'Complete 50 total tasks',
+    category: 'completion',
+    targetValue: 50,
+    xpBonus: 150,
+  },
+  {
+    id: 'streak_3',
+    title: 'On a Roll',
+    description: 'Maintain a 3-day completion streak',
+    category: 'streak',
+    targetValue: 3,
+    xpBonus: 30,
+  },
+  {
+    id: 'streak_7',
+    title: 'Unstoppable',
+    description: 'Maintain a 7-day completion streak',
+    category: 'streak',
+    targetValue: 7,
+    xpBonus: 100,
+  },
+  {
+    id: 'streak_30',
+    title: 'Monthly Legend',
+    description: 'Maintain a 30-day completion streak',
+    category: 'streak',
+    targetValue: 30,
+    xpBonus: 500,
+  },
+  {
+    id: 'perfect_day_1',
+    title: 'Flawless Day',
+    description: 'Complete 100% of scheduled tasks on a day',
+    category: 'perfect_day',
+    targetValue: 1,
+    xpBonus: 50,
+  },
+  {
+    id: 'perfect_day_5',
+    title: 'Master Planner',
+    description: 'Achieve 5 Perfect Days',
+    category: 'perfect_day',
+    targetValue: 5,
+    xpBonus: 200,
+  },
+];

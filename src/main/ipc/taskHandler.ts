@@ -12,6 +12,7 @@ import {
   updateTask,
   deleteTask,
 } from '../database/taskRepository';
+import { recalculateEngagementState } from '../database/engagementRepository';
 import type { Task } from '../../shared/types/task';
 import type { IpcResult } from '../../shared/types/ipc';
 
@@ -46,6 +47,7 @@ export function registerTaskIpcHandlers(): void {
           return { success: false, error: validation.error || 'Invalid create task payload' };
         }
         const task = createTask(validation.data);
+        recalculateEngagementState();
         return { success: true, data: task };
       } catch (err) {
         return {
@@ -66,6 +68,7 @@ export function registerTaskIpcHandlers(): void {
           return { success: false, error: validation.error || 'Invalid update task payload' };
         }
         const task = updateTask(validation.data);
+        recalculateEngagementState();
         return { success: true, data: task };
       } catch (err) {
         return {
@@ -86,6 +89,7 @@ export function registerTaskIpcHandlers(): void {
           return { success: false, error: validation.error || 'Invalid delete task payload' };
         }
         const result = deleteTask(validation.data.id);
+        recalculateEngagementState();
         return { success: true, data: result };
       } catch (err) {
         return {

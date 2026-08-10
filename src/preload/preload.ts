@@ -3,9 +3,10 @@ import { IPC_CHANNELS } from '../shared/constants/ipc';
 import type { SystemInfoRequest, SystemInfoResponse, IpcResult } from '../shared/types/ipc';
 import type { DatabaseStatus } from '../shared/types/database';
 import type { Task, CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../shared/types/task';
+import type { EngagementStats, AchievementProgress } from '../shared/types/engagement';
 
 /**
- * Preload API for Phase 4 Core Task Management Architecture.
+ * Preload API for Core Task Management and Engagement Engine.
  * Exposes specific, type-safe IPC methods via contextBridge.
  * ipcRenderer is NEVER exposed directly to the renderer.
  */
@@ -25,7 +26,7 @@ contextBridge.exposeInMainWorld('dailyflow', {
   getDatabaseStatus: async (): Promise<IpcResult<DatabaseStatus>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DATABASE.GET_STATUS);
   },
-  // Phase 4 Task Management API
+  // Task Management API
   getTasks: async (filter?: TaskFilter): Promise<IpcResult<Task[]>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.TASK.GET_ALL, filter);
   },
@@ -37,5 +38,15 @@ contextBridge.exposeInMainWorld('dailyflow', {
   },
   deleteTask: async (id: string): Promise<IpcResult<{ id: string }>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.TASK.DELETE, { id });
+  },
+  // Phase 7 Engagement Engine API
+  getEngagementStats: async (date?: string): Promise<IpcResult<EngagementStats>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.ENGAGEMENT.GET_STATS, date);
+  },
+  getAchievements: async (): Promise<IpcResult<AchievementProgress[]>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.ENGAGEMENT.GET_ACHIEVEMENTS);
+  },
+  recalculateEngagement: async (date?: string): Promise<IpcResult<EngagementStats>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.ENGAGEMENT.RECALCULATE, date);
   },
 });

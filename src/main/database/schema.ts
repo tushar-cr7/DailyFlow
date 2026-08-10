@@ -28,6 +28,46 @@ const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  {
+    version: 2,
+    name: '002_engagement_engine_schema',
+    up: (db: Database.Database) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS user_engagement (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          total_xp INTEGER NOT NULL DEFAULT 0,
+          current_level INTEGER NOT NULL DEFAULT 1,
+          current_streak INTEGER NOT NULL DEFAULT 0,
+          longest_streak INTEGER NOT NULL DEFAULT 0,
+          last_active_date TEXT,
+          perfect_days_count INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        INSERT OR IGNORE INTO user_engagement (id, total_xp, current_level, current_streak, longest_streak, perfect_days_count)
+        VALUES (1, 0, 1, 0, 0, 0);
+
+        CREATE TABLE IF NOT EXISTS user_achievements (
+          id TEXT PRIMARY KEY,
+          progress INTEGER NOT NULL DEFAULT 0,
+          is_unlocked INTEGER NOT NULL DEFAULT 0,
+          unlocked_at TEXT,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS daily_engagement_logs (
+          date TEXT PRIMARY KEY,
+          tasks_scheduled INTEGER NOT NULL DEFAULT 0,
+          tasks_completed INTEGER NOT NULL DEFAULT 0,
+          is_perfect_day INTEGER NOT NULL DEFAULT 0,
+          xp_earned INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_daily_engagement_date ON daily_engagement_logs(date);
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

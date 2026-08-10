@@ -57,9 +57,11 @@ describe('SQLite Database Layer (Phase 3)', () => {
       .prepare('SELECT version, name FROM schema_migrations')
       .all() as { version: number; name: string }[];
 
-    expect(migrations).toHaveLength(1);
+    expect(migrations.length).toBeGreaterThanOrEqual(2);
     expect(migrations[0]?.version).toBe(1);
     expect(migrations[0]?.name).toBe('001_initial_tasks_schema');
+    expect(migrations[1]?.version).toBe(2);
+    expect(migrations[1]?.name).toBe('002_engagement_engine_schema');
   });
 
   it('handles database close cleanly', () => {

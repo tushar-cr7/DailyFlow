@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Task } from '@shared/types/task';
 import type { SystemInfoResponse, DatabaseStatus, IpcResult } from '@shared/types/ipc';
+import type { EngagementStats } from '@shared/types/engagement';
 import { getTodayString, getCurrentTimeString, shiftDateString, classifyTask } from '@shared/utils/date';
 import { DateNavigator } from './components/DateNavigator';
 import { ViewTabs, type ActiveView } from './components/ViewTabs';
@@ -17,6 +18,9 @@ function App() {
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
+  // Engagement Engine State
+  const [engagementStats, setEngagementStats] = useState<EngagementStats | null>(null);
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -30,6 +34,18 @@ function App() {
 
   const currentDateStr = getTodayString();
   const currentTimeStr = getCurrentTimeString();
+
+  // Fetch engagement stats
+  const fetchEngagementStats = useCallback(async () => {
+    try {
+      const res = await api.getEngagementStats();
+      if (res.success && res.data) {
+        setEngagementStats(res.data);
+      }
+    } catch {
+      // Ignore background fetch error
+    }
+  }, [api]);
 
   // Fetch tasks based on active view
   const fetchTasks = useCallback(async () => {
@@ -89,7 +105,8 @@ function App() {
   useEffect(() => {
     void fetchTasks();
     void checkOverdueCount();
-  }, [fetchTasks, checkOverdueCount]);
+    void fetchEngagementStats();
+  }, [fetchTasks, checkOverdueCount, fetchEngagementStats]);
 
   const overdueTasksCount = useMemo(() => {
     return allIncompleteTasks.filter(
@@ -115,6 +132,7 @@ function App() {
       if (res.success) {
         await fetchTasks();
         await checkOverdueCount();
+        await fetchEngagementStats();
       } else {
         setTaskError(res.error || 'Failed to toggle task completion');
       }
@@ -139,6 +157,7 @@ function App() {
       if (res.success) {
         await fetchTasks();
         await checkOverdueCount();
+        await fetchEngagementStats();
       } else {
         setTaskError(res.error || 'Failed to delete task');
       }
@@ -169,6 +188,7 @@ function App() {
     }
     await fetchTasks();
     await checkOverdueCount();
+    await fetchEngagementStats();
   };
 
   // Health verification handlers
@@ -219,12 +239,29 @@ function App() {
                 </span>
               </div>
               <p className="text-[11px] font-medium text-slate-400">
-                Timezone-Safe Core Task Management
+                Timezone-Safe Core Task Management & Engagement Engine
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Engagement Stats Pill (Level, XP, Streak) */}
+            {engagementStats && (
+              <div className="hidden sm:flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-1.5 shadow-inner text-xs font-semibold">
+                <div className="flex items-center gap-1 text-amber-400 font-bold" title="Current Active Streak">
+                  <span>🔥</span>
+                  <span>{engagementStats.state.currentStreak}d</span>
+                </div>
+                <div className="h-4 w-px bg-slate-800" />
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-indigo-400">Lvl {engagementStats.levelInfo.level}</p>
+                  <p className="text-[9px] text-slate-400">
+                    {engagementStats.levelInfo.xpInLevel}/{engagementStats.levelInfo.xpRequiredForNext} XP
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Active Day Progress Indicator */}
             {activeDayMetrics && activeDayMetrics.total > 0 && (
               <div className="hidden sm:flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-1.5 shadow-inner">
