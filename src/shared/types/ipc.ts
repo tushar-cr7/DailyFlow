@@ -1,4 +1,5 @@
 export * from './database';
+export * from './task';
 
 export interface SystemInfoRequest {
   includeEnv?: boolean;
