@@ -14,6 +14,7 @@ import { FocusModeModal } from './components/FocusModeModal';
 import { DailySummaryModal } from './components/DailySummaryModal';
 import { CelebrationModal } from './components/CelebrationModal';
 import { AnalyticsView } from './components/AnalyticsView';
+import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 
 
 function App() {
@@ -36,6 +37,10 @@ function App() {
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [celebratedDates, setCelebratedDates] = useState<string[]>([]);
+
+  // Phase 10 Notification Settings Modal state
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+
 
   // Task Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -377,6 +382,15 @@ function App() {
 
             <button
               type="button"
+              onClick={() => setIsNotifModalOpen(true)}
+              className="rounded-xl border border-slate-800 bg-slate-950/80 p-2 text-slate-300 hover:text-white hover:bg-slate-900 transition-all text-xs"
+              title="Notification Settings"
+            >
+              🔔
+            </button>
+
+            <button
+              type="button"
               onClick={handleOpenCreateModal}
               className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-95 transition-all"
             >
@@ -385,6 +399,7 @@ function App() {
           </div>
         </div>
       </header>
+
 
       {/* Main Container */}
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-6 space-y-6">
@@ -553,9 +568,16 @@ function App() {
         streakCount={engagementStats?.state.currentStreak || 0}
         xpEarnedToday={engagementStats?.todayLog.xpEarned || 0}
       />
+
+      {/* Notification Settings Modal */}
+      <NotificationSettingsModal
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+      />
     </div>
   );
 }
+
 
 function SecurityCheck() {
   const nodeAccessible =

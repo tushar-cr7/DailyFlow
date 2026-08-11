@@ -93,7 +93,40 @@ const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  {
+    version: 4,
+    name: '004_notifications_schema',
+    up: (db: Database.Database) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS notification_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          enabled INTEGER NOT NULL DEFAULT 1,
+          task_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+          task_reminder_lead_minutes INTEGER NOT NULL DEFAULT 5,
+          overdue_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+          daily_briefing_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+          daily_briefing_time TEXT NOT NULL DEFAULT '09:00',
+          daily_summary_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+          daily_summary_time TEXT NOT NULL DEFAULT '18:00',
+          focus_reminders_enabled INTEGER NOT NULL DEFAULT 1,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        INSERT OR IGNORE INTO notification_settings (id) VALUES (1);
+
+        CREATE TABLE IF NOT EXISTS notification_logs (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL,
+          reference_id TEXT NOT NULL,
+          sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_notification_logs_lookup ON notification_logs(type, reference_id);
+      `);
+    },
+  },
 ];
+
 
 
 export function runMigrations(db: Database.Database): void {

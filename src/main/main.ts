@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { registerIpcHandlers } from './ipc';
 import { initDatabase, closeDatabase } from './database/connection';
+import { notificationScheduler } from './services/notificationScheduler';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -62,6 +63,7 @@ function createWindow(): BrowserWindow {
 void app.whenReady().then(() => {
   initDatabase();
   registerIpcHandlers();
+  notificationScheduler.init();
   createWindow();
 
   app.on('activate', () => {
@@ -78,5 +80,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
+  notificationScheduler.destroy();
   closeDatabase();
 });
+

@@ -13,6 +13,7 @@ import {
   deleteTask,
 } from '../database/taskRepository';
 import { recalculateEngagementState } from '../database/engagementRepository';
+import { notificationScheduler } from '../services/notificationScheduler';
 import type { Task } from '../../shared/types/task';
 import type { IpcResult } from '../../shared/types/ipc';
 
@@ -48,6 +49,7 @@ export function registerTaskIpcHandlers(): void {
         }
         const task = createTask(validation.data);
         recalculateEngagementState();
+        notificationScheduler.rescheduleTask(task.id);
         return { success: true, data: task };
       } catch (err) {
         return {
@@ -69,6 +71,11 @@ export function registerTaskIpcHandlers(): void {
         }
         const task = updateTask(validation.data);
         recalculateEngagementState();
+        if (task.isCompleted) {
+          notificationScheduler.cancelTaskTimer(task.id);
+        } else {
+          notificationScheduler.rescheduleTask(task.id);
+        }
         return { success: true, data: task };
       } catch (err) {
         return {
@@ -90,6 +97,7 @@ export function registerTaskIpcHandlers(): void {
         }
         const result = deleteTask(validation.data.id);
         recalculateEngagementState();
+        notificationScheduler.cancelTaskTimer(validation.data.id);
         return { success: true, data: result };
       } catch (err) {
         return {
@@ -100,3 +108,4 @@ export function registerTaskIpcHandlers(): void {
     },
   );
 }
+

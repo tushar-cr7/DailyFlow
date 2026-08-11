@@ -26,6 +26,11 @@ export const IPC_CHANNELS = {
   ANALYTICS: {
     GET_DATA: 'analytics:get-data',
   },
+  NOTIFICATION: {
+    GET_SETTINGS: 'notification:get-settings',
+    UPDATE_SETTINGS: 'notification:update-settings',
+    TEST_NOTIFICATION: 'notification:test-notification',
+  },
 } as const;
 
 export type IpcChannel =
@@ -34,6 +39,8 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.TASK)[keyof typeof IPC_CHANNELS.TASK]
   | (typeof IPC_CHANNELS.ENGAGEMENT)[keyof typeof IPC_CHANNELS.ENGAGEMENT]
   | (typeof IPC_CHANNELS.DAILY_EXPERIENCE)[keyof typeof IPC_CHANNELS.DAILY_EXPERIENCE]
-  | (typeof IPC_CHANNELS.ANALYTICS)[keyof typeof IPC_CHANNELS.ANALYTICS];
+  | (typeof IPC_CHANNELS.ANALYTICS)[keyof typeof IPC_CHANNELS.ANALYTICS]
+  | (typeof IPC_CHANNELS.NOTIFICATION)[keyof typeof IPC_CHANNELS.NOTIFICATION];
+
 
 

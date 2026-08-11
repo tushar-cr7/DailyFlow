@@ -9,6 +9,10 @@ import type {
   LogFocusSessionDTO,
 } from '../shared/types/dailyExperience';
 import type { AnalyticsQueryDTO, AnalyticsReport } from '../shared/types/analytics';
+import type {
+  NotificationSettings,
+  UpdateNotificationSettingsDTO,
+} from '../shared/types/notifications';
 
 export interface DailyFlowAPI {
   platform: string;
@@ -35,7 +39,14 @@ export interface DailyFlowAPI {
   getDailySummary: (date?: string) => Promise<IpcResult<DailySummary>>;
   // Phase 9 Analytics & Insights API
   getAnalyticsData: (query?: AnalyticsQueryDTO) => Promise<IpcResult<AnalyticsReport>>;
+  // Phase 10 Notifications & Automation API
+  getNotificationSettings: () => Promise<IpcResult<NotificationSettings>>;
+  updateNotificationSettings: (
+    dto: UpdateNotificationSettingsDTO,
+  ) => Promise<IpcResult<NotificationSettings>>;
+  testNotification: () => Promise<IpcResult<{ sent: boolean }>>;
 }
+
 
 
 

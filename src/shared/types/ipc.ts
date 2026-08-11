@@ -2,6 +2,8 @@ export * from './database';
 export * from './task';
 export * from './dailyExperience';
 export * from './analytics';
+export * from './notifications';
+
 
 
 export interface SystemInfoRequest {

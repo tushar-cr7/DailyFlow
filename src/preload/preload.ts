@@ -75,6 +75,19 @@ contextBridge.exposeInMainWorld('dailyflow', {
   getAnalyticsData: async (query?: AnalyticsQueryDTO): Promise<IpcResult<AnalyticsReport>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.GET_DATA, query);
   },
+  // Phase 10 Notifications & Automation API
+  getNotificationSettings: async (): Promise<IpcResult<NotificationSettings>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.NOTIFICATION.GET_SETTINGS);
+  },
+  updateNotificationSettings: async (
+    dto: UpdateNotificationSettingsDTO,
+  ): Promise<IpcResult<NotificationSettings>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.NOTIFICATION.UPDATE_SETTINGS, dto);
+  },
+  testNotification: async (): Promise<IpcResult<{ sent: boolean }>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.NOTIFICATION.TEST_NOTIFICATION);
+  },
 });
+
 
 
