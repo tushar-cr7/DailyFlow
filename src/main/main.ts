@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, Menu, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,6 +33,7 @@ function createWindow(): BrowserWindow {
     show: false,
     title: 'DailyFlow — Flow. Focus. Finish.',
     icon: getIconPath(),
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -41,6 +42,8 @@ function createWindow(): BrowserWindow {
       webSecurity: true,
     },
   });
+
+  mainWindow.setMenu(null);
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -85,6 +88,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 void app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
   try {
     initDatabase();
     registerIpcHandlers();
