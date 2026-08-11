@@ -19,6 +19,7 @@ export interface AppearanceSettings {
   density: 'comfortable' | 'compact';
   reducedMotion: boolean;
   accentColor: 'indigo' | 'emerald' | 'violet' | 'amber' | 'cyan';
+  environment?: 'emerald-forest' | 'deep-ocean' | 'mountain-lake' | 'night-sky' | 'sunset-horizon';
 }
 
 export interface EngagementSettings {

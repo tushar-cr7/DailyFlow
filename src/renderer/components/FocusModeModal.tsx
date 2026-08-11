@@ -30,7 +30,7 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
   }, [isOpen, initialMinutes, task]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
 
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
@@ -39,8 +39,7 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
     } else if (isRunning && timeLeft === 0) {
       setIsRunning(false);
       setSessionCompleted(true);
-      // Automatically log completed session
-      onLogFocusSession(task ? task.id : null, initialMinutes * 60);
+      void onLogFocusSession(task ? task.id : null, initialMinutes * 60);
     }
 
     return () => {
@@ -56,9 +55,11 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progressPercent = Math.round(
-    ((initialMinutes * 60 - timeLeft) / (initialMinutes * 60)) * 100,
-  );
+  const totalSeconds = initialMinutes * 60;
+  const progressRatio = totalSeconds > 0 ? (totalSeconds - timeLeft) / totalSeconds : 0;
+  const radius = 100;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - progressRatio * circumference;
 
   const handleSelectMinutes = (mins: number) => {
     if (isRunning) return;
@@ -68,7 +69,6 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
   };
 
   const handleCompleteAndExit = async () => {
-    // If timer was running and had significant duration, log elapsed time if > 60 seconds
     const elapsed = initialMinutes * 60 - timeLeft;
     if (elapsed >= 60 && !sessionCompleted) {
       await onLogFocusSession(task.id, elapsed);
@@ -78,43 +78,45 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-fadeIn">
-      <div className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-4 animate-card-enter">
+      <div className="w-full max-w-xl obsidian-card border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center relative accent-glow-indigo">
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
+          className="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800/80 transition-colors"
           title="Exit Focus Mode"
         >
           ✕
         </button>
 
         {/* Header Task Context */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-4">
-          <span>🎯</span> Active Focus Task
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-500/15 border border-indigo-500/30 rounded-full text-indigo-300 text-xs font-bold uppercase tracking-wider mb-4">
+          <span>🎯</span> Focus Sanctuary
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 max-w-md">
+        <h1 className="text-2xl sm:text-3xl font-black text-white mb-2 max-w-md tracking-tight">
           {task.title}
         </h1>
 
         {task.description && (
-          <p className="text-sm text-slate-400 mb-6 max-w-lg line-clamp-2">
+          <p className="text-xs text-slate-400 mb-6 max-w-lg line-clamp-2">
             {task.description}
           </p>
         )}
 
         {/* Timer Duration Presets */}
         <div className="flex items-center gap-2 mb-6">
-          {[15, 25, 45].map((mins) => (
+          {[15, 25, 45, 60].map((mins) => (
             <button
               key={mins}
+              type="button"
               disabled={isRunning}
               onClick={() => handleSelectMinutes(mins)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 initialMinutes === mins
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-white/5'
               } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {mins} Mins
@@ -122,62 +124,84 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
           ))}
         </div>
 
-        {/* Timer Display Circle */}
+        {/* Circular SVG Timer Display */}
         <div className="relative my-4 flex items-center justify-center">
-          <div className="w-64 h-64 rounded-full border-8 border-slate-800 flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
-            {/* Simple progress ring background fill */}
-            <div
-              className="absolute bottom-0 w-full bg-indigo-500/10 transition-all duration-1000"
-              style={{ height: `${progressPercent}%` }}
+          <svg className="w-64 h-64 transform -rotate-90">
+            {/* Background Track */}
+            <circle
+              cx="128"
+              cy="128"
+              r={radius}
+              className="stroke-slate-800"
+              strokeWidth="10"
+              fill="transparent"
             />
-            <span className="text-5xl font-black font-mono tracking-tight text-white z-10">
+            {/* Animated Progress Ring */}
+            <circle
+              cx="128"
+              cy="128"
+              r={radius}
+              className="stroke-indigo-500 transition-all duration-500 ease-linear"
+              strokeWidth="10"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              fill="transparent"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-5xl font-black font-mono tracking-tight text-white drop-shadow-md">
               {formatTime(timeLeft)}
             </span>
-            <span className="text-xs text-slate-400 uppercase tracking-widest mt-1 z-10 font-semibold">
-              {isRunning ? 'Session Active' : sessionCompleted ? 'Session Complete!' : 'Ready'}
+            <span className="text-[11px] text-indigo-300 uppercase tracking-widest mt-1 font-bold">
+              {isRunning ? 'Focus Active' : sessionCompleted ? 'Session Complete!' : 'Ready'}
             </span>
           </div>
         </div>
 
         {sessionCompleted && (
-          <div className="mb-4 text-emerald-400 text-sm font-semibold animate-bounce">
-            🎉 Focus session completed! +15 XP earned!
+          <div className="mb-4 text-amber-400 text-sm font-bold animate-bounce flex items-center gap-1.5">
+            <span>✨</span> Focus session complete! +15 XP earned!
           </div>
         )}
 
-        {/* Timer Control Buttons */}
+        {/* Timer Controls */}
         <div className="flex items-center gap-4 mt-4">
           {!isRunning ? (
             <button
+              type="button"
               onClick={() => setIsRunning(true)}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2 text-sm active:scale-95"
             >
-              <span>▶️</span> {timeLeft < initialMinutes * 60 ? 'Resume' : 'Start Focus'}
+              <span>▶️</span> {timeLeft < initialMinutes * 60 ? 'Resume Session' : 'Start Session'}
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => setIsRunning(false)}
-              className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm"
+              className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-600/25 transition-all flex items-center gap-2 text-sm active:scale-95"
             >
               <span>⏸️</span> Pause
             </button>
           )}
 
           <button
+            type="button"
             onClick={() => {
               setIsRunning(false);
               setTimeLeft(initialMinutes * 60);
               setSessionCompleted(false);
             }}
-            className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition-colors text-sm"
+            className="px-4 py-3 bg-slate-800/90 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-white/10 transition-colors text-sm"
           >
             Reset
           </button>
         </div>
 
-        {/* Task Completion CTA */}
-        <div className="mt-8 pt-6 border-t border-slate-800 w-full flex items-center justify-between">
+        {/* Bottom Bar Action */}
+        <div className="mt-8 pt-5 border-t border-white/10 w-full flex items-center justify-between">
           <button
+            type="button"
             onClick={onClose}
             className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
           >
@@ -185,8 +209,9 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={handleCompleteAndExit}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition-all flex items-center gap-1.5"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/25 transition-all flex items-center gap-1.5 active:scale-95"
           >
             <span>✓</span> Complete Task & Exit
           </button>

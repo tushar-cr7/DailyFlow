@@ -1,5 +1,5 @@
 import type { CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../types/task';
-import { isValidDateString, isValidTimeString } from './date';
+import { isValidDateString, normalizeTimeString } from './date';
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -57,10 +57,14 @@ export function validateCreateTaskInput(input: unknown): { valid: boolean; error
 
   let scheduledTime: string | null = null;
   if (input.scheduledTime !== undefined && input.scheduledTime !== null && input.scheduledTime !== '') {
-    if (typeof input.scheduledTime !== 'string' || !isValidTimeString(input.scheduledTime)) {
+    if (typeof input.scheduledTime !== 'string') {
       return { valid: false, error: 'Task scheduled time must be formatted as HH:mm (24-hour)' };
     }
-    scheduledTime = input.scheduledTime;
+    const normalized = normalizeTimeString(input.scheduledTime);
+    if (!normalized) {
+      return { valid: false, error: 'Task scheduled time must be formatted as HH:mm (24-hour)' };
+    }
+    scheduledTime = normalized;
   }
 
   return {
@@ -114,10 +118,14 @@ export function validateUpdateTaskInput(input: unknown): { valid: boolean; error
 
   if (input.scheduledTime !== undefined) {
     if (input.scheduledTime !== null && input.scheduledTime !== '') {
-      if (typeof input.scheduledTime !== 'string' || !isValidTimeString(input.scheduledTime)) {
+      if (typeof input.scheduledTime !== 'string') {
         return { valid: false, error: 'Task scheduled time must be formatted as HH:mm (24-hour) or null' };
       }
-      data.scheduledTime = input.scheduledTime;
+      const normalized = normalizeTimeString(input.scheduledTime);
+      if (!normalized) {
+        return { valid: false, error: 'Task scheduled time must be formatted as HH:mm (24-hour) or null' };
+      }
+      data.scheduledTime = normalized;
     } else {
       data.scheduledTime = null;
     }

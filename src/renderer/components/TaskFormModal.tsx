@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Task } from '@shared/types/task';
 import { getTodayString, isValidDateString, isValidTimeString } from '@shared/utils/date';
+import { TimePicker } from './TimePicker';
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -93,19 +94,19 @@ export function TaskFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 glass-modal animate-card-enter">
       <div
-        className="w-full max-w-lg rounded-2xl border border-slate-700/80 bg-slate-900 p-6 shadow-2xl shadow-indigo-950/50 space-y-5"
+        className="w-full max-w-lg obsidian-card rounded-3xl border border-white/10 p-6 shadow-2xl space-y-5 accent-glow-indigo"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
       >
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <h2 id="modal-title" className="text-base font-bold text-slate-100 flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <h2 id="modal-title" className="text-base font-bold text-white flex items-center gap-2 tracking-tight">
             <span>{initialTask ? '✏️ Edit Task' : '✨ Create New Task'}</span>
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-800/80 hover:text-white transition-colors"
             title="Close modal"
           >
             ✕
@@ -130,7 +131,7 @@ export function TaskFormModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Review architecture documentation"
-              className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+              className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
             />
           </div>
 
@@ -145,7 +146,7 @@ export function TaskFormModal({
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
               />
             </div>
 
@@ -153,12 +154,10 @@ export function TaskFormModal({
               <label htmlFor="task-time-input" className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                 Scheduled Time (Optional)
               </label>
-              <input
+              <TimePicker
                 id="task-time-input"
-                type="time"
                 value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                onChange={setScheduledTime}
               />
             </div>
           </div>
@@ -173,22 +172,22 @@ export function TaskFormModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add extra context, links, or notes..."
-              className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+              className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-700/60 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all active:scale-95"
+              className="rounded-xl border border-white/10 bg-slate-800/90 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition-all active:scale-95"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-95 transition-all disabled:opacity-50"
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 px-5 py-2 text-xs font-bold text-white shadow-md transition-all disabled:opacity-50 active:scale-95"
             >
               {submitting ? 'Saving...' : initialTask ? 'Save Changes' : 'Create Task'}
             </button>

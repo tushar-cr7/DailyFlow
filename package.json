@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "package": "npm run build && electron-builder --win"
+    "package": "npm run build && electron-builder --win",
+    "app:dir": "electron-builder --dir",
+    "app:dist": "npm run build && electron-builder --win nsis"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
@@ -40,9 +42,10 @@
     "vitest": "^3.2.4"
   },
   "build": {
-    "appId": "com.dailyflow.app",
+    "appId": "com.tushar.dailyflow",
     "productName": "DailyFlow",
     "copyright": "Copyright © 2026 DailyFlow",
+    "icon": "assets/icon.png",
     "npmRebuild": false,
     "directories": {
       "output": "release"
@@ -50,7 +53,14 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
+      "assets/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
     ],
     "asar": true,
     "asarUnpack": [
@@ -58,14 +68,22 @@
     ],
     "win": {
       "target": [
-        "nsis"
-      ]
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "executableName": "DailyFlow",
+      "icon": "assets/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
+      "runAfterFinish": true,
       "shortcutName": "DailyFlow"
     }
   }

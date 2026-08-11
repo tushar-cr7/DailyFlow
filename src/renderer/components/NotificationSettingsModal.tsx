@@ -148,6 +148,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                     type="time"
                     value={settings.dailyBriefingTime}
                     onChange={(e) => handleToggleField('dailyBriefingTime', e.target.value)}
+                    style={{ colorScheme: 'dark' }}
                     className="bg-slate-800 text-slate-200 text-xs rounded px-2 py-1 border border-slate-700 focus:outline-none"
                   />
                   <input
@@ -173,6 +174,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                     type="time"
                     value={settings.dailySummaryTime}
                     onChange={(e) => handleToggleField('dailySummaryTime', e.target.value)}
+                    style={{ colorScheme: 'dark' }}
                     className="bg-slate-800 text-slate-200 text-xs rounded px-2 py-1 border border-slate-700 focus:outline-none"
                   />
                   <input

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isValidDateString,
   isValidTimeString,
+  normalizeTimeString,
   parseDateParts,
   createLocalDate,
   shiftDateString,
@@ -25,7 +26,8 @@ describe('Date & Time Utilities & Deterministic Scheduling Classification (Phase
       expect(isValidTimeString('14:30')).toBe(true);
       expect(isValidTimeString('23:59')).toBe(true);
       expect(isValidTimeString('24:00')).toBe(false);
-      expect(isValidTimeString('9:30')).toBe(false);
+      expect(isValidTimeString('invalid')).toBe(false);
+      expect(normalizeTimeString('9:30')).toBe('09:30');
     });
   });
 

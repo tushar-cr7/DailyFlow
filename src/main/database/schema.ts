@@ -159,11 +159,23 @@ const MIGRATIONS: Migration[] = [
           show_streak_banners INTEGER NOT NULL DEFAULT 1,
           show_xp_notifications INTEGER NOT NULL DEFAULT 1,
           auto_complete_task_on_focus_end INTEGER NOT NULL DEFAULT 0,
+          environment TEXT NOT NULL DEFAULT 'emerald-forest',
           updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
 
         INSERT OR IGNORE INTO user_settings (id) VALUES (1);
       `);
+    },
+  },
+  {
+    version: 6,
+    name: '006_user_settings_environment_column',
+    up: (db: Database.Database) => {
+      const tableInfo = db.prepare("PRAGMA table_info('user_settings')").all() as { name: string }[];
+      const existingCols = new Set(tableInfo.map((c) => c.name));
+      if (!existingCols.has('environment')) {
+        db.exec("ALTER TABLE user_settings ADD COLUMN environment TEXT NOT NULL DEFAULT 'emerald-forest';");
+      }
     },
   },
 ];

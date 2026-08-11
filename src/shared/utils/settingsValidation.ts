@@ -22,6 +22,7 @@ export const DEFAULT_USER_SETTINGS: Omit<UserSettings, 'storage' | 'updatedAt'> 
     density: 'comfortable',
     reducedMotion: false,
     accentColor: 'indigo',
+    environment: 'emerald-forest',
   },
   notifications: {
     enabled: true,
@@ -49,6 +50,7 @@ const VALID_DEFAULT_VIEW = new Set(['today', 'upcoming']);
 const VALID_THEME = new Set(['dark', 'light', 'system']);
 const VALID_DENSITY = new Set(['comfortable', 'compact']);
 const VALID_ACCENT_COLOR = new Set(['indigo', 'emerald', 'violet', 'amber', 'cyan']);
+const VALID_ENVIRONMENT = new Set(['emerald-forest', 'deep-ocean', 'mountain-lake', 'night-sky', 'sunset-horizon']);
 const VALID_TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export function validateUpdateUserSettingsDTO(dto: unknown): {
@@ -177,6 +179,13 @@ export function validateUpdateUserSettingsDTO(dto: unknown): {
           errors.push('accentColor must be "indigo", "emerald", "violet", "amber", or "cyan"');
         } else {
           sanitized.appearance.accentColor = raw.appearance.accentColor;
+        }
+      }
+      if (raw.appearance.environment !== undefined) {
+        if (!VALID_ENVIRONMENT.has(raw.appearance.environment)) {
+          errors.push('environment must be a valid environment theme');
+        } else {
+          sanitized.appearance.environment = raw.appearance.environment;
         }
       }
     }

@@ -37,6 +37,28 @@ describe('Task Input Boundary Validation (Phase 5)', () => {
       expect(res.error).toContain('YYYY-MM-DD');
     });
 
+    it('normalizes various valid time formats correctly', () => {
+      const times = [
+        { in: '00:00', out: '00:00' },
+        { in: '09:30', out: '09:30' },
+        { in: '9:30', out: '09:30' },
+        { in: '12:00', out: '12:00' },
+        { in: '23:59', out: '23:59' },
+        { in: '09:30:00', out: '09:30' },
+        { in: '', out: null },
+      ];
+
+      for (const t of times) {
+        const res = validateCreateTaskInput({
+          title: 'Task',
+          date: '2026-08-10',
+          scheduledTime: t.in,
+        });
+        expect(res.valid).toBe(true);
+        expect(res.data?.scheduledTime).toBe(t.out);
+      }
+    });
+
     it('rejects invalid time format', () => {
       const res = validateCreateTaskInput({
         title: 'Task',

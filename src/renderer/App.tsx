@@ -1,25 +1,32 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Task } from '@shared/types/task';
-import type { SystemInfoResponse, DatabaseStatus, IpcResult } from '@shared/types/ipc';
 import type { EngagementStats } from '@shared/types/engagement';
 import type { DailyBriefing as DailyBriefingType, DailySummary } from '@shared/types/dailyExperience';
 import { getTodayString, getCurrentTimeString, shiftDateString, classifyTask } from '@shared/utils/date';
+import { SidebarNav } from './components/SidebarNav';
 import { DateNavigator } from './components/DateNavigator';
-import { ViewTabs, type ActiveView } from './components/ViewTabs';
-import { OverdueBanner } from './components/OverdueBanner';
-import { TaskList } from './components/TaskList';
-import { TaskFormModal } from './components/TaskFormModal';
+import { type ActiveView } from './components/ViewTabs';
 import { DailyBriefing } from './components/DailyBriefing';
+import { NorthStarCard } from './components/NorthStarCard';
+import { ProgressRingModule } from './components/ProgressRingModule';
+import { QuickCaptureBar } from './components/QuickCaptureBar';
+import { TodayFlowTimeline } from './components/TodayFlowTimeline';
+import { UpcomingView } from './components/UpcomingView';
+import { OverdueView } from './components/OverdueView';
 import { FocusModeModal } from './components/FocusModeModal';
 import { DailySummaryModal } from './components/DailySummaryModal';
 import { CelebrationModal } from './components/CelebrationModal';
 import { AnalyticsView } from './components/AnalyticsView';
 import { SettingsModal } from './components/SettingsModal';
+import { TaskFormModal } from './components/TaskFormModal';
+import { BackgroundSlideshow } from './components/BackgroundSlideshow';
+import { StartupSplash } from './components/StartupSplash';
+import { type EnvironmentTheme } from './utils/backgroundAssets';
 import type { UserSettings } from '@shared/types/settings';
-
 
 function App() {
   const api = window.dailyflow;
+  const [showSplash, setShowSplash] = useState(true);
   const [activeView, setActiveView] = useState<ActiveView>('today');
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -27,14 +34,28 @@ function App() {
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
-  // Phase 11 Settings State
+  // Settings & Engagement State
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-
-  // Engagement Engine State
   const [engagementStats, setEngagementStats] = useState<EngagementStats | null>(null);
 
-  // Phase 8 Daily Experience State
+  // Active Environment Theme (persisted via UserSettings in SQLite database)
+  const activeEnv: EnvironmentTheme = userSettings?.appearance.environment || 'emerald-forest';
+
+  const handleEnvChange = async (newEnv: string) => {
+    try {
+      const res = await api.updateSettings({
+        appearance: { environment: newEnv as EnvironmentTheme },
+      });
+      if (res.success && res.data) {
+        setUserSettings(res.data);
+      }
+    } catch {
+      // Ignore background update error
+    }
+  };
+
+  // Daily Experience State
   const [dailyBriefing, setDailyBriefing] = useState<DailyBriefingType | null>(null);
   const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
   const [activeFocusTask, setActiveFocusTask] = useState<Task | null>(null);
@@ -43,22 +64,33 @@ function App() {
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [celebratedDates, setCelebratedDates] = useState<string[]>([]);
 
-
-  // Task Modal state
+  // Task Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  // Health check collapsible drawer state
-  const [showHealthPanel, setShowHealthPanel] = useState(false);
-  const [ipcResult, setIpcResult] = useState<IpcResult<SystemInfoResponse> | null>(null);
-  const [dbResult, setDbResult] = useState<IpcResult<DatabaseStatus> | null>(null);
-  const [loadingIpc, setLoadingIpc] = useState(false);
-  const [loadingDb, setLoadingDb] = useState(false);
 
   const currentDateStr = getTodayString();
   const currentTimeStr = getCurrentTimeString();
 
-  // Fetch user settings
+  // Keyboard Shortcuts (Ctrl+N to create task, Esc to close modals)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setEditingTask(null);
+        setIsModalOpen(true);
+      } else if (e.key === 'Escape') {
+        if (isModalOpen) setIsModalOpen(false);
+        else if (isFocusModalOpen) setIsFocusModalOpen(false);
+        else if (isSummaryModalOpen) setIsSummaryModalOpen(false);
+        else if (isCelebrationOpen) setIsCelebrationOpen(false);
+        else if (isSettingsModalOpen) setIsSettingsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, isFocusModalOpen, isSummaryModalOpen, isCelebrationOpen, isSettingsModalOpen]);
+
+  // Fetch User Settings
   const fetchUserSettings = useCallback(async () => {
     try {
       const res = await api.getSettings();
@@ -70,7 +102,7 @@ function App() {
     }
   }, [api]);
 
-  // Fetch engagement stats
+  // Fetch Engagement Stats
   const fetchEngagementStats = useCallback(async () => {
     try {
       const res = await api.getEngagementStats();
@@ -82,7 +114,7 @@ function App() {
     }
   }, [api]);
 
-  // Fetch daily briefing
+  // Fetch Daily Briefing
   const fetchDailyBriefing = useCallback(async () => {
     try {
       const res = await api.getDailyBriefing(selectedDate);
@@ -94,7 +126,7 @@ function App() {
     }
   }, [api, selectedDate]);
 
-  // Fetch tasks based on active view
+  // Fetch Tasks
   const fetchTasks = useCallback(async () => {
     setLoadingTasks(true);
     setTaskError(null);
@@ -137,7 +169,7 @@ function App() {
     }
   }, [api, activeView, selectedDate, currentDateStr, currentTimeStr]);
 
-  // Fetch all incomplete tasks in background to compute global overdue badge count
+  // Check Overdue Count
   const checkOverdueCount = useCallback(async () => {
     try {
       const res = await api.getTasks({ isCompleted: false });
@@ -157,7 +189,7 @@ function App() {
     void fetchDailyBriefing();
   }, [fetchUserSettings, fetchTasks, checkOverdueCount, fetchEngagementStats, fetchDailyBriefing]);
 
-  // Check for 100% completion celebration once per day (if enabled in settings)
+  // Check for 100% completion celebration
   useEffect(() => {
     const showCelebrations = userSettings?.engagement.showCelebrations ?? true;
     if (
@@ -179,80 +211,52 @@ function App() {
     ).length;
   }, [allIncompleteTasks, currentDateStr, currentTimeStr]);
 
-  // Active day completion metrics
-  const activeDayMetrics = useMemo(() => {
-    if (activeView !== 'today') return null;
-    const total = tasks.length;
-    const completed = tasks.filter((t) => t.isCompleted).length;
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, percent };
-  }, [activeView, tasks]);
-
+  // Handlers
   const handleToggleComplete = async (task: Task) => {
     try {
-      const res = await api.updateTask({
-        id: task.id,
-        isCompleted: !task.isCompleted,
-      });
+      const updatedIsCompleted = !task.isCompleted;
+      const res = await api.updateTask({ id: task.id, isCompleted: updatedIsCompleted });
       if (res.success) {
         await fetchTasks();
-        await checkOverdueCount();
-        await fetchEngagementStats();
-        await fetchDailyBriefing();
+        void fetchEngagementStats();
+        void fetchDailyBriefing();
+        void checkOverdueCount();
+      }
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : 'Failed to toggle task completion');
+    }
+  };
+
+  const handleSaveTask = async (dto: {
+    title: string;
+    description?: string | null;
+    date: string;
+    scheduledTime?: string | null;
+  }) => {
+    try {
+      if (editingTask) {
+        await api.updateTask({ id: editingTask.id, ...dto });
       } else {
-        setTaskError(res.error || 'Failed to toggle task completion');
+        await api.createTask(dto);
       }
+      await fetchTasks();
+      void fetchEngagementStats();
+      void fetchDailyBriefing();
+      void checkOverdueCount();
     } catch (err) {
-      setTaskError(err instanceof Error ? err.message : 'Error updating task');
+      setTaskError(err instanceof Error ? err.message : 'Failed to save task');
     }
   };
 
-  const handleSetPrimaryFocus = async (taskId: string | null) => {
+  const handleDeleteTask = async (id: string) => {
     try {
-      const res = await api.setPrimaryFocus(taskId, selectedDate);
-      if (res.success && res.data) {
-        setDailyBriefing(res.data);
-      }
+      await api.deleteTask(id);
+      await fetchTasks();
+      void fetchEngagementStats();
+      void fetchDailyBriefing();
+      void checkOverdueCount();
     } catch (err) {
-      setTaskError(err instanceof Error ? err.message : 'Failed to set primary focus');
-    }
-  };
-
-  const handleStartFocusMode = (task: Task) => {
-    setActiveFocusTask(task);
-    setIsFocusModalOpen(true);
-  };
-
-  const handleLogFocusSession = async (taskId: string | null, durationSeconds: number) => {
-    try {
-      await api.logFocusSession({ taskId, durationSeconds, date: selectedDate });
-      await fetchEngagementStats();
-      await fetchDailyBriefing();
-    } catch {
-      // Ignore background log error
-    }
-  };
-
-  const handleOpenSummaryModal = async () => {
-    try {
-      const res = await api.getDailySummary(selectedDate);
-      if (res.success && res.data) {
-        setDailySummary(res.data);
-        setIsSummaryModalOpen(true);
-      }
-    } catch (err) {
-      setTaskError(err instanceof Error ? err.message : 'Failed to fetch daily summary');
-    }
-  };
-
-  const handleSaveReflection = async (reflection: string) => {
-    try {
-      const res = await api.saveDailyReflection(reflection, selectedDate);
-      if (res.success && res.data) {
-        setDailySummary(res.data);
-      }
-    } catch (err) {
-      setTaskError(err instanceof Error ? err.message : 'Failed to save reflection');
+      setTaskError(err instanceof Error ? err.message : 'Failed to delete task');
     }
   };
 
@@ -266,288 +270,197 @@ function App() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTask = async (id: string) => {
+  const handleSetPrimaryFocus = async (taskId: string | null) => {
     try {
-      const res = await api.deleteTask(id);
-      if (res.success) {
-        await fetchTasks();
-        await checkOverdueCount();
-        await fetchEngagementStats();
-        await fetchDailyBriefing();
-      } else {
-        setTaskError(res.error || 'Failed to delete task');
+      const res = await api.setPrimaryFocus(taskId, selectedDate);
+      if (res.success && res.data) {
+        setDailyBriefing(res.data);
       }
-    } catch (err) {
-      setTaskError(err instanceof Error ? err.message : 'Error deleting task');
+    } catch {
+      // Ignore focus set failure
     }
   };
 
-  const handleSaveTask = async (dto: {
-    title: string;
-    description?: string | null;
-    date: string;
-    scheduledTime?: string | null;
-  }) => {
-    if (editingTask) {
-      const res = await api.updateTask({
-        id: editingTask.id,
-        ...dto,
-      });
-      if (!res.success) {
-        throw new Error(res.error || 'Failed to update task');
-      }
-    } else {
-      const res = await api.createTask(dto);
-      if (!res.success) {
-        throw new Error(res.error || 'Failed to create task');
-      }
-    }
-    await fetchTasks();
-    await checkOverdueCount();
-    await fetchEngagementStats();
-    await fetchDailyBriefing();
+  const handleStartFocusMode = (task: Task) => {
+    setActiveFocusTask(task);
+    setIsFocusModalOpen(true);
   };
 
-  // Health verification handlers
-  const handleTestIpc = async () => {
-    setLoadingIpc(true);
+  const handleLogFocusSession = async (taskId: string | null, durationSeconds: number) => {
     try {
-      const res = await api.getSystemInfo({ includeEnv: false });
-      setIpcResult(res);
-    } catch (err) {
-      setIpcResult({
-        success: false,
-        error: err instanceof Error ? err.message : 'IPC call failed',
-      });
-    } finally {
-      setLoadingIpc(false);
+      await api.logFocusSession({ taskId, durationSeconds, date: selectedDate });
+      void fetchEngagementStats();
+      void fetchDailyBriefing();
+    } catch {
+      // Ignore focus log error
     }
   };
 
-  const handleTestDb = async () => {
-    setLoadingDb(true);
+  const handleOpenSummaryModal = async () => {
     try {
-      const res = await api.getDatabaseStatus();
-      setDbResult(res);
-    } catch (err) {
-      setDbResult({
-        success: false,
-        error: err instanceof Error ? err.message : 'Database status IPC call failed',
-      });
-    } finally {
-      setLoadingDb(false);
+      const res = await api.getDailySummary(selectedDate);
+      if (res.success && res.data) {
+        setDailySummary(res.data);
+        setIsSummaryModalOpen(true);
+      }
+    } catch {
+      // Ignore summary fetch failure
     }
   };
+
+  const handleSaveReflection = async (reflection: string) => {
+    try {
+      const res = await api.saveDailyReflection(reflection, selectedDate);
+      if (res.success && res.data) {
+        setDailySummary(res.data);
+      }
+    } catch {
+      // Ignore reflection save error
+    }
+  };
+
+  const incompleteTodayTasks = useMemo(() => tasks.filter((t) => !t.isCompleted), [tasks]);
+
+  const envAccentClass = activeEnv === 'deep-ocean'
+    ? 'theme-ocean'
+    : activeEnv === 'mountain-lake'
+    ? 'theme-mountain'
+    : activeEnv === 'night-sky'
+    ? 'theme-night'
+    : activeEnv === 'sunset-horizon'
+    ? 'theme-sunset'
+    : 'theme-emerald';
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md px-6 py-4">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 text-sm">
-              DF
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold tracking-tight text-slate-100">DailyFlow</h1>
-                <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400 border border-indigo-500/20">
-                  Desktop Scheduler
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-slate-400">
-                Timezone-Safe Core Task Management & Daily Experience Workspace
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Engagement Stats Pill (Level, XP, Streak) */}
-            {engagementStats && (
-              <div className="hidden sm:flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-1.5 shadow-inner text-xs font-semibold">
-                <div className="flex items-center gap-1 text-amber-400 font-bold" title="Current Active Streak">
-                  <span>🔥</span>
-                  <span>{engagementStats.state.currentStreak}d</span>
-                </div>
-                <div className="h-4 w-px bg-slate-800" />
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-indigo-400">Lvl {engagementStats.levelInfo.level}</p>
-                  <p className="text-[9px] text-slate-400">
-                    {engagementStats.levelInfo.xpInLevel}/{engagementStats.levelInfo.xpRequiredForNext} XP
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Active Day Progress Indicator */}
-            {activeDayMetrics && activeDayMetrics.total > 0 && (
-              <div className="hidden sm:flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-1.5 shadow-inner">
-                <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Progress</p>
-                  <p className="text-xs font-bold text-indigo-400">
-                    {activeDayMetrics.completed}/{activeDayMetrics.total} Done
-                  </p>
-                </div>
-                <div className="h-2 w-16 rounded-full bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300"
-                    style={{ width: `${activeDayMetrics.percent}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setIsSettingsModalOpen(true)}
-              className="rounded-xl border border-slate-800 bg-slate-950/80 p-2 text-slate-300 hover:text-white hover:bg-slate-900 transition-all text-xs flex items-center gap-1.5"
-              title="Settings & Personalization"
-            >
-              <span>⚙️</span>
-              <span className="hidden sm:inline font-medium">Settings</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleOpenCreateModal}
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-95 transition-all"
-            >
-              + New Task
-            </button>
-          </div>
-        </div>
-      </header>
-
-
-      {/* Main Container */}
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-6 space-y-6">
-        {/* Overdue Alert Banner */}
-        {activeView !== 'overdue' && (
-          <OverdueBanner
-            overdueCount={overdueTasksCount}
-            onViewOverdue={() => setActiveView('overdue')}
-          />
-        )}
-
-        {/* View Switcher Tabs */}
-        <ViewTabs
-          activeView={activeView}
-          overdueCount={overdueTasksCount}
-          onViewChange={setActiveView}
+    <div className={`relative flex h-screen w-screen overflow-hidden text-slate-100 font-sans ${envAccentClass}`}>
+      {/* Startup Splash Screen */}
+      {showSplash && (
+        <StartupSplash
+          theme={activeEnv}
+          onComplete={() => setShowSplash(false)}
         />
+      )}
 
-        {/* Date Navigator - Single Source of Truth */}
+      {/* Real Environment Background Photo Slideshow */}
+      <BackgroundSlideshow
+        theme={activeEnv}
+        reducedMotion={userSettings?.appearance.reducedMotion ?? false}
+      />
+
+      {/* 1. Compact Desktop Sidebar Navigation */}
+      <SidebarNav
+        activeView={activeView}
+        overdueCount={overdueTasksCount}
+        engagementStats={engagementStats}
+        onViewChange={setActiveView}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenCreateModal={handleOpenCreateModal}
+        currentEnv={activeEnv}
+        onEnvChange={handleEnvChange}
+      />
+
+      {/* 2. Translucent Glass Workspace Canvas */}
+      <main className={`relative z-10 flex-1 flex flex-col h-full overflow-y-auto px-6 py-6 space-y-6 ${!showSplash ? 'animate-dashboard-reveal' : ''}`}>
+        {/* Date Navigator Header on Today View */}
         {activeView === 'today' && (
           <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
         )}
 
-        {/* Phase 8 Daily Briefing & Goals Workspace */}
+        {/* View Routing */}
         {activeView === 'today' && (
-          <DailyBriefing
-            briefing={dailyBriefing}
-            allTodayTasks={tasks}
-            onStartFocus={handleStartFocusMode}
-            onSetPrimaryFocus={handleSetPrimaryFocus}
-            onOpenSummary={handleOpenSummaryModal}
-          />
+          <div className="space-y-6 max-w-5xl mx-auto w-full">
+            {/* Today Top Asymmetric Dashboard Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column (Hero Greeting, North Star, Quick Capture) */}
+              <div className="lg:col-span-2 space-y-5">
+                <DailyBriefing
+                  briefing={dailyBriefing}
+                  onOpenSummary={handleOpenSummaryModal}
+                  userName={userSettings?.general.userName || 'Flow User'}
+                />
+
+                <NorthStarCard
+                  primaryFocusTask={dailyBriefing?.primaryFocusTask || null}
+                  incompleteTasks={incompleteTodayTasks}
+                  onStartFocus={handleStartFocusMode}
+                  onSetPrimaryFocus={handleSetPrimaryFocus}
+                />
+
+                <QuickCaptureBar onOpenCreateModal={handleOpenCreateModal} />
+              </div>
+
+              {/* Right Column (Radial Progress & Gamification Module) */}
+              <div className="lg:col-span-1">
+                <ProgressRingModule
+                  completedCount={dailyBriefing?.completedCount || 0}
+                  totalScheduled={dailyBriefing?.totalScheduled || 0}
+                  engagementStats={engagementStats}
+                />
+              </div>
+            </div>
+
+            {/* Today's Flow Spatial Timeline */}
+            <section className="pt-2 space-y-4">
+              {taskError && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300 font-semibold">
+                  {taskError}
+                </div>
+              )}
+
+              {loadingTasks ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-xs font-semibold space-y-2">
+                  <div className="h-6 w-6 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+                  <span>Loading workspace flow...</span>
+                </div>
+              ) : (
+                <TodayFlowTimeline
+                  tasks={tasks}
+                  currentDateStr={currentDateStr}
+                  currentTimeStr={currentTimeStr}
+                  onToggleComplete={handleToggleComplete}
+                  onEdit={handleOpenEditModal}
+                  onDelete={handleDeleteTask}
+                  onStartFocus={handleStartFocusMode}
+                  onOpenCreateModal={handleOpenCreateModal}
+                />
+              )}
+            </section>
+          </div>
         )}
 
-        {/* Phase 9 Analytics View */}
-        {activeView === 'analytics' ? (
-          <AnalyticsView />
-        ) : (
-          /* Task List Canvas */
-          <section className="space-y-4">
-            {taskError && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300 font-medium">
-                {taskError}
-              </div>
-            )}
-
-            <TaskList
+        {activeView === 'upcoming' && (
+          <div className="max-w-5xl mx-auto w-full">
+            <UpcomingView
               tasks={tasks}
-              loading={loadingTasks}
-              viewMode={activeView === 'today' ? 'single-date' : activeView}
               currentDateStr={currentDateStr}
-              currentTimeStr={currentTimeStr}
               onToggleComplete={handleToggleComplete}
               onEdit={handleOpenEditModal}
               onDelete={handleDeleteTask}
               onOpenCreateModal={handleOpenCreateModal}
             />
-          </section>
+          </div>
         )}
 
+        {activeView === 'overdue' && (
+          <div className="max-w-4xl mx-auto w-full">
+            <OverdueView
+              tasks={tasks}
+              currentDateStr={currentDateStr}
+              onToggleComplete={handleToggleComplete}
+              onEdit={handleOpenEditModal}
+              onDelete={handleDeleteTask}
+            />
+          </div>
+        )}
 
-        {/* Collapsible System Health Verification Drawer */}
-        <section className="mt-8 border-t border-slate-900 pt-4">
-          <button
-            type="button"
-            onClick={() => setShowHealthPanel((prev) => !prev)}
-            className="flex items-center justify-between w-full text-left py-2 px-3 rounded-lg hover:bg-slate-900/60 transition-colors"
-          >
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <span>🛠️ Phase 2/3 System Health Diagnostics</span>
-              <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 font-mono">
-                IPC & Database
-              </span>
-            </span>
-            <span className="text-xs text-slate-400 font-bold">
-              {showHealthPanel ? 'Hide ▲' : 'Show ▼'}
-            </span>
-          </button>
-
-          {showHealthPanel && (
-            <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 animate-card-enter">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Database Status */}
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-slate-300">SQLite Database Status</span>
-                    <button
-                      type="button"
-                      onClick={handleTestDb}
-                      disabled={loadingDb}
-                      className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50 transition-all"
-                    >
-                      {loadingDb ? 'Checking...' : 'Check DB'}
-                    </button>
-                  </div>
-                  {dbResult && (
-                    <pre className="mt-2 text-xs font-mono bg-slate-900 text-slate-300 p-3 rounded-lg border border-slate-800 overflow-x-auto">
-                      {JSON.stringify(dbResult, null, 2)}
-                    </pre>
-                  )}
-                </div>
-
-                {/* IPC Status */}
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-slate-300">Typed IPC Bridge Status</span>
-                    <button
-                      type="button"
-                      onClick={handleTestIpc}
-                      disabled={loadingIpc}
-                      className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-all"
-                    >
-                      {loadingIpc ? 'Invoking...' : 'Invoke IPC'}
-                    </button>
-                  </div>
-                  {ipcResult && (
-                    <pre className="mt-2 text-xs font-mono bg-slate-900 text-slate-300 p-3 rounded-lg border border-slate-800 overflow-x-auto">
-                      {JSON.stringify(ipcResult, null, 2)}
-                    </pre>
-                  )}
-                </div>
-              </div>
-
-              <SecurityCheck />
-            </div>
-          )}
-        </section>
+        {activeView === 'analytics' && (
+          <div className="max-w-5xl mx-auto w-full">
+            <AnalyticsView />
+          </div>
+        )}
       </main>
 
-      {/* Task Form Modal */}
+      {/* Modals */}
       <TaskFormModal
         isOpen={isModalOpen}
         initialTask={editingTask}
@@ -556,7 +469,6 @@ function App() {
         onSubmit={handleSaveTask}
       />
 
-      {/* Focus Mode Modal */}
       <FocusModeModal
         task={activeFocusTask}
         isOpen={isFocusModalOpen}
@@ -570,7 +482,6 @@ function App() {
         onLogFocusSession={handleLogFocusSession}
       />
 
-      {/* Daily Summary & Reflection Modal */}
       <DailySummaryModal
         summary={dailySummary}
         isOpen={isSummaryModalOpen}
@@ -578,7 +489,6 @@ function App() {
         onSaveReflection={handleSaveReflection}
       />
 
-      {/* Celebration Modal */}
       <CelebrationModal
         isOpen={isCelebrationOpen}
         onClose={() => setIsCelebrationOpen(false)}
@@ -587,7 +497,6 @@ function App() {
         xpEarnedToday={engagementStats?.todayLog.xpEarned || 0}
       />
 
-      {/* Settings & Personalization Modal */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -597,54 +506,6 @@ function App() {
         }}
       />
     </div>
-  );
-}
-
-
-function SecurityCheck() {
-  const nodeAccessible =
-    typeof (window as Window & { require?: unknown }).require !== 'undefined';
-  const processAccessible =
-    typeof (window as Window & { process?: unknown }).process !== 'undefined';
-  const ipcRendererAccessible =
-    typeof (window as Window & { ipcRenderer?: unknown }).ipcRenderer !== 'undefined';
-
-  return (
-    <div className="border-t border-slate-800 pt-3">
-      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-        Electron Security Boundary Status
-      </h3>
-      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div className="flex items-center gap-1.5">
-          <StatusBadge ok={!nodeAccessible} />
-          <span className="text-slate-300 text-[11px]">Require Blocked</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <StatusBadge ok={!processAccessible} />
-          <span className="text-slate-300 text-[11px]">Process Blocked</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <StatusBadge ok={!ipcRendererAccessible} />
-          <span className="text-slate-300 text-[11px]">ipcRenderer Blocked</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <StatusBadge ok={typeof window.dailyflow !== 'undefined'} />
-          <span className="text-slate-300 text-[11px]">contextBridge Active</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatusBadge({ ok }: { ok: boolean }) {
-  return (
-    <span
-      className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${
-        ok ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-      }`}
-    >
-      {ok ? '✓' : '✗'}
-    </span>
   );
 }
 

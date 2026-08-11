@@ -12,87 +12,172 @@ html,
 body,
 #root {
   height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f172a; /* Slate 900 */
   color: #f8fafc;
+  user-select: none;
+  background-color: #04060d;
+}
+
+/* Translucent Glass UI Surface Utilities */
+.glass-surface {
+  background: rgba(10, 14, 26, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 1.25rem; /* 20px */
+}
+
+.glass-surface-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-surface-hover:hover {
+  background: rgba(15, 20, 36, 0.68);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.glass-nav {
+  background: rgba(8, 11, 20, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-modal {
+  background: rgba(4, 6, 12, 0.82);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+.obsidian-card {
+  background: rgba(10, 14, 26, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 1.25rem;
+}
+
+.obsidian-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.obsidian-card-hover:hover {
+  background: rgba(15, 20, 36, 0.68);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Theme Accent Classes */
+.theme-emerald {
+  --theme-accent: #10b981;
+  --theme-accent-glow: rgba(16, 185, 129, 0.25);
+}
+.theme-ocean {
+  --theme-accent: #0ea5e9;
+  --theme-accent-glow: rgba(14, 165, 233, 0.25);
+}
+.theme-mountain {
+  --theme-accent: #6366f1;
+  --theme-accent-glow: rgba(99, 102, 241, 0.25);
+}
+.theme-night {
+  --theme-accent: #8b5cf6;
+  --theme-accent-glow: rgba(139, 92, 246, 0.25);
+}
+.theme-sunset {
+  --theme-accent: #f59e0b;
+  --theme-accent-glow: rgba(245, 158, 11, 0.25);
 }
 
 /* Custom Keyframe Animations */
 @keyframes checkmark-pop {
-  0% {
-    transform: scale(0.8);
-  }
-  50% {
-    transform: scale(1.25);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(0.7); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+@keyframes xp-float {
+  0% { opacity: 0; transform: translateY(0) scale(0.85); }
+  25% { opacity: 1; transform: translateY(-10px) scale(1.05); }
+  80% { opacity: 1; transform: translateY(-26px) scale(1); }
+  100% { opacity: 0; transform: translateY(-34px) scale(0.95); }
+}
+
+@keyframes flame-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)); }
+}
+
+/* Focus Visible Accessibility Rule */
+:focus-visible {
+  outline: 2px solid rgba(129, 140, 248, 0.8) !important;
+  outline-offset: 2px !important;
+}
+
+@keyframes dashboard-reveal {
+  from { opacity: 0; transform: scale(0.99) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-dashboard-reveal {
+  animation: dashboard-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-checkmark-pop {
-  animation: checkmark-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: checkmark-pop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .animate-card-enter {
   animation: card-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-xp-float {
+  animation: xp-float 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Glassmorphism & Surface Utilities */
-.glass-panel {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.animate-flame-pulse {
+  animation: flame-pulse 2s ease-in-out infinite;
 }
 
-.glass-panel-light {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .animate-checkmark-pop,
+  .animate-card-enter,
+  .animate-xp-float,
+  .animate-flame-pulse {
+    animation: none !important;
+    transform: none !important;
+    transition: opacity 0.15s ease-in-out !important;
+  }
 }
 
-.glass-modal {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Timeline Connector Stem */
+.timeline-stem {
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: -24px;
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.06));
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -100,10 +185,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.35);
 }

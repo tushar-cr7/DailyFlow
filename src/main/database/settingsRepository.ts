@@ -26,6 +26,7 @@ interface UserSettingsRow {
   density: 'comfortable' | 'compact';
   reduced_motion: number;
   accent_color: 'indigo' | 'emerald' | 'violet' | 'amber' | 'cyan';
+  environment?: 'emerald-forest' | 'deep-ocean' | 'mountain-lake' | 'night-sky' | 'sunset-horizon';
   show_celebrations: number;
   show_streak_banners: number;
   show_xp_notifications: number;
@@ -99,6 +100,7 @@ export function getUserSettings(customDb?: Database.Database): UserSettings {
       density: row.density || DEFAULT_USER_SETTINGS.appearance.density,
       reducedMotion: row.reduced_motion === 1,
       accentColor: row.accent_color || DEFAULT_USER_SETTINGS.appearance.accentColor,
+      environment: row.environment || DEFAULT_USER_SETTINGS.appearance.environment,
     },
     notifications: notifSettings,
     engagement: {
@@ -151,6 +153,7 @@ export function updateUserSettings(
         density = ?,
         reduced_motion = ?,
         accent_color = ?,
+        environment = ?,
         show_celebrations = ?,
         show_streak_banners = ?,
         show_xp_notifications = ?,
@@ -170,6 +173,7 @@ export function updateUserSettings(
     mergedAppearance.density,
     mergedAppearance.reducedMotion ? 1 : 0,
     mergedAppearance.accentColor,
+    mergedAppearance.environment || 'emerald-forest',
     mergedEngagement.showCelebrations ? 1 : 0,
     mergedEngagement.showStreakBanners ? 1 : 0,
     mergedEngagement.showXPNotifications ? 1 : 0,

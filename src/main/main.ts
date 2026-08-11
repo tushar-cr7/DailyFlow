@@ -6,9 +6,23 @@ import { registerIpcHandlers } from './ipc';
 import { initDatabase, closeDatabase } from './database/connection';
 import { notificationScheduler } from './services/notificationScheduler';
 
+import fs from 'node:fs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isDev = !app.isPackaged;
+
+function getIconPath(): string {
+  const devPath = path.join(__dirname, '../assets/branding/dailyflow-logo.png');
+  if (fs.existsSync(devPath)) {
+    return devPath;
+  }
+  const resourcesPath = path.join(process.resourcesPath, 'assets/branding/dailyflow-logo.png');
+  if (fs.existsSync(resourcesPath)) {
+    return resourcesPath;
+  }
+  return devPath;
+}
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -17,7 +31,8 @@ function createWindow(): BrowserWindow {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    title: 'DailyFlow',
+    title: 'DailyFlow — Flow. Focus. Finish.',
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

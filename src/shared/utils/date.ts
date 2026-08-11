@@ -1,7 +1,6 @@
 import type { ScheduleStatus } from '../types/task';
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function isValidDateString(dateStr: string): boolean {
   if (!DATE_REGEX.test(dateStr)) return false;
@@ -13,9 +12,47 @@ export function isValidDateString(dateStr: string): boolean {
     date.getDate() === parts.day
   );
 }
+export function normalizeTimeString(timeStr: string): string | null {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const trimmed = timeStr.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  // Check 12-hour format with AM/PM (e.g. "9am", "9:30am", "2:15 pm", "12:00 am")
+  const ampmMatch = trimmed.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
+  if (ampmMatch && ampmMatch[1] && ampmMatch[3]) {
+    let hr = parseInt(ampmMatch[1], 10);
+    const min = ampmMatch[2] ? parseInt(ampmMatch[2], 10) : 0;
+    const period = ampmMatch[3];
+    if (hr < 1 || hr > 12 || min < 0 || min > 59) return null;
+    if (period === 'pm' && hr < 12) hr += 12;
+    if (period === 'am' && hr === 12) hr = 0;
+    return `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  }
+
+  // Check 24-hour format (e.g. "09:30", "9:30", "14:00", "09:30:00")
+  const match = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/);
+  if (match && match[1] && match[2]) {
+    const hours = String(match[1]).padStart(2, '0');
+    const minutes = String(match[2]).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Check short digits like "900", "1430"
+  const digitsMatch = trimmed.match(/^(\d{3,4})$/);
+  if (digitsMatch && digitsMatch[1]) {
+    const val = digitsMatch[1].padStart(4, '0');
+    const hr = parseInt(val.slice(0, 2), 10);
+    const min = parseInt(val.slice(2, 4), 10);
+    if (hr >= 0 && hr <= 23 && min >= 0 && min <= 59) {
+      return `${String(hr).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+    }
+  }
+
+  return null;
+}
 
 export function isValidTimeString(timeStr: string): boolean {
-  return TIME_REGEX.test(timeStr);
+  return normalizeTimeString(timeStr) !== null;
 }
 
 export function parseDateParts(dateStr: string): { year: number; month: number; day: number } {

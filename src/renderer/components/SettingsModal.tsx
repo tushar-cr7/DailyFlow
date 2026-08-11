@@ -138,18 +138,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fadeIn">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal p-4 animate-card-enter">
+      <div className="w-full max-w-2xl obsidian-card border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] accent-glow-indigo">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/50">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-950/60">
+          <div className="flex items-center gap-2.5">
             <span className="text-xl">⚙️</span>
-            <h2 className="text-lg font-bold text-slate-100">Settings & Personalization</h2>
+            <h2 className="text-lg font-bold text-white tracking-tight">Settings & Personalization</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition-colors"
           >
             ✕
           </button>
@@ -452,8 +452,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                   <div className="flex items-center justify-between p-3.5 bg-slate-950/60 rounded-xl border border-slate-800">
                     <div>
+                      <div className="text-xs font-semibold text-slate-200">Environment Theme</div>
+                      <div className="text-[11px] text-slate-400">Select photographic background atmosphere</div>
+                    </div>
+                    <select
+                      value={settings.appearance.environment || 'emerald-forest'}
+                      onChange={(e) =>
+                        handleUpdate({
+                          appearance: {
+                            environment: e.target.value as
+                              | 'emerald-forest'
+                              | 'deep-ocean'
+                              | 'mountain-lake'
+                              | 'night-sky'
+                              | 'sunset-horizon',
+                          },
+                        })
+                      }
+                      className="bg-slate-800 text-slate-200 text-xs rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none"
+                    >
+                      <option value="emerald-forest">🌿 Emerald Forest</option>
+                      <option value="deep-ocean">🌊 Deep Ocean</option>
+                      <option value="mountain-lake">🏔️ Mountain Lake</option>
+                      <option value="night-sky">🌌 Night Sky</option>
+                      <option value="sunset-horizon">🌅 Sunset Horizon</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3.5 bg-slate-950/60 rounded-xl border border-slate-800">
+                    <div>
                       <div className="text-xs font-semibold text-slate-200">Reduced Motion</div>
-                      <div className="text-[11px] text-slate-400">Minimize animations and transition effects</div>
+                      <div className="text-[11px] text-slate-400 font-semibold text-slate-400">Minimize animations and transition effects</div>
                     </div>
                     <input
                       type="checkbox"
@@ -529,6 +558,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           onChange={(e) =>
                             handleUpdate({ notifications: { dailyBriefingTime: e.target.value } })
                           }
+                          style={{ colorScheme: 'dark' }}
                           className="bg-slate-800 text-slate-200 text-xs rounded px-2 py-1 border border-slate-700 focus:outline-none"
                         />
                         <input
@@ -556,6 +586,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           onChange={(e) =>
                             handleUpdate({ notifications: { dailySummaryTime: e.target.value } })
                           }
+                          style={{ colorScheme: 'dark' }}
                           className="bg-slate-800 text-slate-200 text-xs rounded px-2 py-1 border border-slate-700 focus:outline-none"
                         />
                         <input
