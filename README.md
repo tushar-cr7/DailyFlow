@@ -230,12 +230,6 @@ Future development iterations will focus on:
 
 ---
 
-## 📜 License
-
-This project is licensed under the **MIT License**.
-
----
-
 ## 👤 Author
 
 **DailyFlow** — [Tushar](https://github.com/tushar-cr7)
