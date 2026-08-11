@@ -4,6 +4,18 @@ import type { SystemInfoRequest, SystemInfoResponse, IpcResult } from '../shared
 import type { DatabaseStatus } from '../shared/types/database';
 import type { Task, CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../shared/types/task';
 import type { EngagementStats, AchievementProgress } from '../shared/types/engagement';
+import type {
+  DailyBriefing,
+  DailySummary,
+  FocusSession,
+  LogFocusSessionDTO,
+} from '../shared/types/dailyExperience';
+import type { AnalyticsQueryDTO, AnalyticsReport } from '../shared/types/analytics';
+import type {
+  NotificationSettings,
+  UpdateNotificationSettingsDTO,
+} from '../shared/types/notifications';
+import type { UserSettings, UpdateUserSettingsDTO } from '../shared/types/settings';
 
 /**
  * Preload API for Core Task Management and Engagement Engine.
@@ -86,6 +98,22 @@ contextBridge.exposeInMainWorld('dailyflow', {
   },
   testNotification: async (): Promise<IpcResult<{ sent: boolean }>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.NOTIFICATION.TEST_NOTIFICATION);
+  },
+  // Phase 11 Settings & Personalization API
+  getSettings: async (): Promise<IpcResult<UserSettings>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.GET);
+  },
+  updateSettings: async (dto: UpdateUserSettingsDTO): Promise<IpcResult<UserSettings>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.UPDATE, dto);
+  },
+  exportUserData: async (): Promise<IpcResult<{ exported: boolean; filePath?: string }>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.EXPORT);
+  },
+  importUserData: async (): Promise<IpcResult<{ imported: boolean; taskCount: number }>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.IMPORT);
+  },
+  resetAppData: async (confirmation: string): Promise<IpcResult<{ reset: boolean }>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.RESET, confirmation);
   },
 });
 

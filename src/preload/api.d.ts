@@ -13,6 +13,7 @@ import type {
   NotificationSettings,
   UpdateNotificationSettingsDTO,
 } from '../shared/types/notifications';
+import type { UserSettings, UpdateUserSettingsDTO } from '../shared/types/settings';
 
 export interface DailyFlowAPI {
   platform: string;
@@ -45,6 +46,12 @@ export interface DailyFlowAPI {
     dto: UpdateNotificationSettingsDTO,
   ) => Promise<IpcResult<NotificationSettings>>;
   testNotification: () => Promise<IpcResult<{ sent: boolean }>>;
+  // Phase 11 Settings & Personalization API
+  getSettings: () => Promise<IpcResult<UserSettings>>;
+  updateSettings: (dto: UpdateUserSettingsDTO) => Promise<IpcResult<UserSettings>>;
+  exportUserData: () => Promise<IpcResult<{ exported: boolean; filePath?: string }>>;
+  importUserData: () => Promise<IpcResult<{ imported: boolean; taskCount: number }>>;
+  resetAppData: (confirmation: string) => Promise<IpcResult<{ reset: boolean }>>;
 }
 
 

@@ -31,6 +31,13 @@ export const IPC_CHANNELS = {
     UPDATE_SETTINGS: 'notification:update-settings',
     TEST_NOTIFICATION: 'notification:test-notification',
   },
+  SETTINGS: {
+    GET: 'settings:get',
+    UPDATE: 'settings:update',
+    EXPORT: 'settings:export-data',
+    IMPORT: 'settings:import-data',
+    RESET: 'settings:reset-data',
+  },
 } as const;
 
 export type IpcChannel =
@@ -40,7 +47,8 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.ENGAGEMENT)[keyof typeof IPC_CHANNELS.ENGAGEMENT]
   | (typeof IPC_CHANNELS.DAILY_EXPERIENCE)[keyof typeof IPC_CHANNELS.DAILY_EXPERIENCE]
   | (typeof IPC_CHANNELS.ANALYTICS)[keyof typeof IPC_CHANNELS.ANALYTICS]
-  | (typeof IPC_CHANNELS.NOTIFICATION)[keyof typeof IPC_CHANNELS.NOTIFICATION];
+  | (typeof IPC_CHANNELS.NOTIFICATION)[keyof typeof IPC_CHANNELS.NOTIFICATION]
+  | (typeof IPC_CHANNELS.SETTINGS)[keyof typeof IPC_CHANNELS.SETTINGS];
 
 
 

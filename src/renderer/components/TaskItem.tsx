@@ -6,6 +6,7 @@ interface TaskItemProps {
   task: Task;
   currentDateStr?: string;
   currentTimeStr?: string;
+  density?: 'comfortable' | 'compact';
   onToggleComplete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -15,6 +16,7 @@ export function TaskItem({
   task,
   currentDateStr = getTodayString(),
   currentTimeStr = getCurrentTimeString(),
+  density = 'comfortable',
   onToggleComplete,
   onEdit,
   onDelete,
@@ -31,9 +33,11 @@ export function TaskItem({
     return 'border-l-4 border-l-amber-500/70 bg-slate-800/80 border-slate-700/60';
   };
 
+  const paddingClass = density === 'compact' ? 'p-2.5' : 'p-4';
+
   return (
     <div
-      className={`group relative rounded-xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md animate-card-enter ${getStatusBorderClass()}`}
+      className={`group relative rounded-xl border ${paddingClass} shadow-sm transition-all duration-200 hover:shadow-md animate-card-enter ${getStatusBorderClass()}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">

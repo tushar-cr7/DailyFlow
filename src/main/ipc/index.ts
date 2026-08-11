@@ -5,6 +5,7 @@ import { registerEngagementIpcHandlers } from './engagementHandler';
 import { registerDailyExperienceHandlers } from './dailyExperienceHandler';
 import { registerAnalyticsIpcHandlers } from './analyticsHandler';
 import { registerNotificationIpcHandlers } from './notificationHandler';
+import { registerSettingsHandlers } from './settingsHandler';
 
 export function registerIpcHandlers(): void {
   registerSystemIpcHandlers();
@@ -14,6 +15,7 @@ export function registerIpcHandlers(): void {
   registerDailyExperienceHandlers();
   registerAnalyticsIpcHandlers();
   registerNotificationIpcHandlers();
+  registerSettingsHandlers();
 }
 
 

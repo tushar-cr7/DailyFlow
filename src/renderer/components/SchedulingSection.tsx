@@ -6,6 +6,7 @@ interface SchedulingSectionProps {
   tasks: Task[];
   currentDateStr?: string;
   currentTimeStr?: string;
+  density?: 'comfortable' | 'compact';
   onToggleComplete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -16,6 +17,7 @@ export function SchedulingSection({
   tasks,
   currentDateStr,
   currentTimeStr,
+  density,
   onToggleComplete,
   onEdit,
   onDelete,
@@ -37,6 +39,7 @@ export function SchedulingSection({
             task={task}
             currentDateStr={currentDateStr}
             currentTimeStr={currentTimeStr}
+            density={density}
             onToggleComplete={onToggleComplete}
             onEdit={onEdit}
             onDelete={onDelete}

@@ -67,7 +67,7 @@ export function generateAnalyticsReport(
   userEngagement: UserEngagementState,
   range: AnalyticsTimeRange,
   referenceDateStr: string,
-  priorPeriodTasks: Task[] = [],
+  _priorPeriodTasks: Task[] = [],
   priorPeriodFocusSessions: FocusSessionRaw[] = [],
 ): AnalyticsReport {
   const { startDate, endDate, dates } = resolveDateRange(range, referenceDateStr);
@@ -133,7 +133,7 @@ export function generateAnalyticsReport(
     const dateCompRate = dateCreated > 0 ? Math.round((dateCompleted / dateCreated) * 100) : 0;
 
     const log = logsByDate.get(dateStr);
-    const focusMins = focusByDate.get(dateStr) || log?.total_focus_minutes || 0;
+    const focusMins = focusByDate.get(dateStr) || 0;
     const xp = log?.xpEarned || 0;
     const perfect = log?.isPerfectDay || false;
 

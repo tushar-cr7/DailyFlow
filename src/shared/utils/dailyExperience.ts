@@ -30,7 +30,7 @@ export function getMotivationalQuote(streak: number = 0, isPerfectDay: boolean =
     return `🔥 ${streak}-day streak! Keep the momentum going!`;
   }
   const index = Math.abs(streak) % MOTIVATIONAL_QUOTES.length;
-  return MOTIVATIONAL_QUOTES[index];
+  return MOTIVATIONAL_QUOTES[index] || MOTIVATIONAL_QUOTES[0]!;
 }
 
 export function calculatePaceStatus(

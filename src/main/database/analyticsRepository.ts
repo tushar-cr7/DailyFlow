@@ -1,6 +1,5 @@
 import type Database from 'better-sqlite3';
 import { getDatabase } from './connection';
-import type { Task } from '../../shared/types/task';
 import type { DailyEngagementLog } from '../../shared/types/engagement';
 import type { AnalyticsQueryDTO, AnalyticsReport } from '../../shared/types/analytics';
 import {

@@ -125,6 +125,36 @@ const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  {
+    version: 5,
+    name: '005_user_settings_schema',
+    up: (db: Database.Database) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS user_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          user_name TEXT NOT NULL DEFAULT 'Flow User',
+          start_of_week TEXT NOT NULL DEFAULT 'monday',
+          time_format TEXT NOT NULL DEFAULT '12h',
+          launch_at_login INTEGER NOT NULL DEFAULT 0,
+          default_view TEXT NOT NULL DEFAULT 'today',
+          default_focus_minutes INTEGER NOT NULL DEFAULT 25,
+          auto_open_daily_briefing INTEGER NOT NULL DEFAULT 1,
+          preset_focus_durations TEXT NOT NULL DEFAULT '[15,25,45,60]',
+          theme TEXT NOT NULL DEFAULT 'dark',
+          density TEXT NOT NULL DEFAULT 'comfortable',
+          reduced_motion INTEGER NOT NULL DEFAULT 0,
+          accent_color TEXT NOT NULL DEFAULT 'indigo',
+          show_celebrations INTEGER NOT NULL DEFAULT 1,
+          show_streak_banners INTEGER NOT NULL DEFAULT 1,
+          show_xp_notifications INTEGER NOT NULL DEFAULT 1,
+          auto_complete_task_on_focus_end INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        INSERT OR IGNORE INTO user_settings (id) VALUES (1);
+      `);
+    },
+  },
 ];
 
 
