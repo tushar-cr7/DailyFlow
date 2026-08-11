@@ -1,7 +1,7 @@
 {
   "name": "dailyflow",
   "version": "0.1.0",
-  "description": "DailyFlow — Windows desktop productivity scheduler",
+  "description": "DailyFlow — a desktop productivity workspace for planning, focusing, tracking progress, and understanding your day.",
   "main": "dist-electron/main.js",
   "author": "DailyFlow",
   "license": "MIT",
