@@ -13,6 +13,8 @@ import { DailyBriefing } from './components/DailyBriefing';
 import { FocusModeModal } from './components/FocusModeModal';
 import { DailySummaryModal } from './components/DailySummaryModal';
 import { CelebrationModal } from './components/CelebrationModal';
+import { AnalyticsView } from './components/AnalyticsView';
+
 
 function App() {
   const api = window.dailyflow;
@@ -417,26 +419,32 @@ function App() {
           />
         )}
 
-        {/* Task List Canvas */}
-        <section className="space-y-4">
-          {taskError && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300 font-medium">
-              {taskError}
-            </div>
-          )}
+        {/* Phase 9 Analytics View */}
+        {activeView === 'analytics' ? (
+          <AnalyticsView />
+        ) : (
+          /* Task List Canvas */
+          <section className="space-y-4">
+            {taskError && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300 font-medium">
+                {taskError}
+              </div>
+            )}
 
-          <TaskList
-            tasks={tasks}
-            loading={loadingTasks}
-            viewMode={activeView === 'today' ? 'single-date' : activeView}
-            currentDateStr={currentDateStr}
-            currentTimeStr={currentTimeStr}
-            onToggleComplete={handleToggleComplete}
-            onEdit={handleOpenEditModal}
-            onDelete={handleDeleteTask}
-            onOpenCreateModal={handleOpenCreateModal}
-          />
-        </section>
+            <TaskList
+              tasks={tasks}
+              loading={loadingTasks}
+              viewMode={activeView === 'today' ? 'single-date' : activeView}
+              currentDateStr={currentDateStr}
+              currentTimeStr={currentTimeStr}
+              onToggleComplete={handleToggleComplete}
+              onEdit={handleOpenEditModal}
+              onDelete={handleDeleteTask}
+              onOpenCreateModal={handleOpenCreateModal}
+            />
+          </section>
+        )}
+
 
         {/* Collapsible System Health Verification Drawer */}
         <section className="mt-8 border-t border-slate-900 pt-4">

@@ -71,5 +71,10 @@ contextBridge.exposeInMainWorld('dailyflow', {
   getDailySummary: async (date?: string): Promise<IpcResult<DailySummary>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.DAILY_EXPERIENCE.GET_SUMMARY, date);
   },
+  // Phase 9 Analytics & Insights API
+  getAnalyticsData: async (query?: AnalyticsQueryDTO): Promise<IpcResult<AnalyticsReport>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.GET_DATA, query);
+  },
 });
+
 

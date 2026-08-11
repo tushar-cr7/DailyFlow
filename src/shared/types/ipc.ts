@@ -1,6 +1,8 @@
 export * from './database';
 export * from './task';
 export * from './dailyExperience';
+export * from './analytics';
+
 
 export interface SystemInfoRequest {
   includeEnv?: boolean;

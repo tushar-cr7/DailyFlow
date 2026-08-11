@@ -23,6 +23,9 @@ export const IPC_CHANNELS = {
     SAVE_REFLECTION: 'daily:save-reflection',
     GET_SUMMARY: 'daily:get-summary',
   },
+  ANALYTICS: {
+    GET_DATA: 'analytics:get-data',
+  },
 } as const;
 
 export type IpcChannel =
@@ -30,5 +33,7 @@ export type IpcChannel =
   | (typeof IPC_CHANNELS.DATABASE)[keyof typeof IPC_CHANNELS.DATABASE]
   | (typeof IPC_CHANNELS.TASK)[keyof typeof IPC_CHANNELS.TASK]
   | (typeof IPC_CHANNELS.ENGAGEMENT)[keyof typeof IPC_CHANNELS.ENGAGEMENT]
-  | (typeof IPC_CHANNELS.DAILY_EXPERIENCE)[keyof typeof IPC_CHANNELS.DAILY_EXPERIENCE];
+  | (typeof IPC_CHANNELS.DAILY_EXPERIENCE)[keyof typeof IPC_CHANNELS.DAILY_EXPERIENCE]
+  | (typeof IPC_CHANNELS.ANALYTICS)[keyof typeof IPC_CHANNELS.ANALYTICS];
+
 

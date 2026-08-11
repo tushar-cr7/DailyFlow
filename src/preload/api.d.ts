@@ -8,6 +8,7 @@ import type {
   FocusSession,
   LogFocusSessionDTO,
 } from '../shared/types/dailyExperience';
+import type { AnalyticsQueryDTO, AnalyticsReport } from '../shared/types/analytics';
 
 export interface DailyFlowAPI {
   platform: string;
@@ -32,7 +33,10 @@ export interface DailyFlowAPI {
   logFocusSession: (dto: LogFocusSessionDTO) => Promise<IpcResult<FocusSession>>;
   saveDailyReflection: (reflection: string, date?: string) => Promise<IpcResult<DailySummary>>;
   getDailySummary: (date?: string) => Promise<IpcResult<DailySummary>>;
+  // Phase 9 Analytics & Insights API
+  getAnalyticsData: (query?: AnalyticsQueryDTO) => Promise<IpcResult<AnalyticsReport>>;
 }
+
 
 
 declare global {

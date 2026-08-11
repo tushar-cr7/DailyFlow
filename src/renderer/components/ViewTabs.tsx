@@ -1,4 +1,4 @@
-export type ActiveView = 'today' | 'upcoming' | 'overdue';
+export type ActiveView = 'today' | 'upcoming' | 'overdue' | 'analytics';
 
 interface ViewTabsProps {
   activeView: ActiveView;
@@ -18,7 +18,7 @@ export function ViewTabs({ activeView, overdueCount, onViewChange }: ViewTabsPro
             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
         }`}
       >
-        <span>📅 Today / Date</span>
+        <span>📅 Today</span>
       </button>
 
       <button
@@ -30,7 +30,7 @@ export function ViewTabs({ activeView, overdueCount, onViewChange }: ViewTabsPro
             : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
         }`}
       >
-        <span>🚀 Upcoming (7 Days)</span>
+        <span>🚀 Upcoming</span>
       </button>
 
       <button
@@ -46,13 +46,28 @@ export function ViewTabs({ activeView, overdueCount, onViewChange }: ViewTabsPro
         {overdueCount > 0 && (
           <span
             className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-              activeView === 'overdue' ? 'bg-white text-rose-700' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              activeView === 'overdue'
+                ? 'bg-white text-rose-700'
+                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
             }`}
           >
             {overdueCount}
           </span>
         )}
       </button>
+
+      <button
+        type="button"
+        onClick={() => onViewChange('analytics')}
+        className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
+          activeView === 'analytics'
+            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+        }`}
+      >
+        <span>📊 Analytics</span>
+      </button>
     </div>
   );
 }
+
