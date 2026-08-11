@@ -53,7 +53,9 @@ export async function exportUserDataToFile(customDb?: Database.Database): Promis
     return { exported: false };
   }
 
-  fs.writeFileSync(filePath, jsonStr, 'utf-8');
+  const tempPath = `${filePath}.tmp`;
+  fs.writeFileSync(tempPath, jsonStr, 'utf-8');
+  fs.renameSync(tempPath, filePath);
   return { exported: true, filePath };
 }
 

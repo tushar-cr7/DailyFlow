@@ -72,13 +72,24 @@ const MIGRATIONS: Migration[] = [
     version: 3,
     name: '003_daily_experience_schema',
     up: (db: Database.Database) => {
-      // Extend daily_engagement_logs table with focus & reflection fields
-      db.exec(`
-        ALTER TABLE daily_engagement_logs ADD COLUMN primary_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL;
-        ALTER TABLE daily_engagement_logs ADD COLUMN daily_reflection TEXT;
-        ALTER TABLE daily_engagement_logs ADD COLUMN total_focus_minutes INTEGER NOT NULL DEFAULT 0;
-        ALTER TABLE daily_engagement_logs ADD COLUMN is_summary_reviewed INTEGER NOT NULL DEFAULT 0;
+      // Safely check existing columns before adding to daily_engagement_logs
+      const tableInfo = db.prepare("PRAGMA table_info('daily_engagement_logs')").all() as { name: string }[];
+      const existingCols = new Set(tableInfo.map((c) => c.name));
 
+      if (!existingCols.has('primary_task_id')) {
+        db.exec("ALTER TABLE daily_engagement_logs ADD COLUMN primary_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL;");
+      }
+      if (!existingCols.has('daily_reflection')) {
+        db.exec("ALTER TABLE daily_engagement_logs ADD COLUMN daily_reflection TEXT;");
+      }
+      if (!existingCols.has('total_focus_minutes')) {
+        db.exec("ALTER TABLE daily_engagement_logs ADD COLUMN total_focus_minutes INTEGER NOT NULL DEFAULT 0;");
+      }
+      if (!existingCols.has('is_summary_reviewed')) {
+        db.exec("ALTER TABLE daily_engagement_logs ADD COLUMN is_summary_reviewed INTEGER NOT NULL DEFAULT 0;");
+      }
+
+      db.exec(`
         CREATE TABLE IF NOT EXISTS focus_sessions (
           id TEXT PRIMARY KEY,
           task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,

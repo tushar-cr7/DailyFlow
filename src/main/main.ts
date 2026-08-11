@@ -60,11 +60,28 @@ function createWindow(): BrowserWindow {
   return mainWindow;
 }
 
+// Global Error Boundaries for Main Process
+process.on('uncaughtException', (error) => {
+  console.error('[Main Process Uncaught Exception]:', error.message || error);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Main Process Unhandled Rejection]:', reason);
+});
+
 void app.whenReady().then(() => {
-  initDatabase();
-  registerIpcHandlers();
-  notificationScheduler.init();
-  createWindow();
+  try {
+    initDatabase();
+    registerIpcHandlers();
+    try {
+      notificationScheduler.init();
+    } catch (schedErr) {
+      console.error('[Scheduler Init Warning]: Notification scheduler failed to initialize:', schedErr);
+    }
+    createWindow();
+  } catch (err) {
+    console.error('[Fatal App Startup Error]:', err);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

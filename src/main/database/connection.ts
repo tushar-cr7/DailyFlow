@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'node:path';
@@ -24,7 +25,21 @@ export function initDatabase(customPath?: string): Database.Database {
   currentDbPath = dbPath;
 
   try {
+    if (dbPath !== ':memory:') {
+      const parentDir = path.dirname(dbPath);
+      if (!fs.existsSync(parentDir)) {
+        fs.mkdirSync(parentDir, { recursive: true });
+      }
+    }
+
     const db = new Database(dbPath);
+
+    // Run quick integrity check
+    const checkResult = db.prepare('PRAGMA quick_check').pluck().get() as string;
+    if (checkResult !== 'ok') {
+      console.error('[Database Integrity Error]: PRAGMA quick_check failed:', checkResult);
+      throw new Error(`Database integrity check failed: ${checkResult}`);
+    }
 
     // Apply required performance and reliability PRAGMA settings
     db.pragma('journal_mode = WAL');
