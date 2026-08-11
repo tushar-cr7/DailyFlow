@@ -49,4 +49,27 @@ contextBridge.exposeInMainWorld('dailyflow', {
   recalculateEngagement: async (date?: string): Promise<IpcResult<EngagementStats>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.ENGAGEMENT.RECALCULATE, date);
   },
+  // Phase 8 Daily Experience API
+  getDailyBriefing: async (date?: string): Promise<IpcResult<DailyBriefing>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DAILY_EXPERIENCE.GET_BRIEFING, date);
+  },
+  setPrimaryFocus: async (
+    taskId: string | null,
+    date?: string,
+  ): Promise<IpcResult<DailyBriefing>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DAILY_EXPERIENCE.SET_PRIMARY_FOCUS, { taskId, date });
+  },
+  logFocusSession: async (dto: LogFocusSessionDTO): Promise<IpcResult<FocusSession>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DAILY_EXPERIENCE.LOG_FOCUS_SESSION, dto);
+  },
+  saveDailyReflection: async (
+    reflection: string,
+    date?: string,
+  ): Promise<IpcResult<DailySummary>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DAILY_EXPERIENCE.SAVE_REFLECTION, { reflection, date });
+  },
+  getDailySummary: async (date?: string): Promise<IpcResult<DailySummary>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DAILY_EXPERIENCE.GET_SUMMARY, date);
+  },
 });
+

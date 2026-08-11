@@ -2,12 +2,17 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Task } from '@shared/types/task';
 import type { SystemInfoResponse, DatabaseStatus, IpcResult } from '@shared/types/ipc';
 import type { EngagementStats } from '@shared/types/engagement';
+import type { DailyBriefing as DailyBriefingType, DailySummary } from '@shared/types/dailyExperience';
 import { getTodayString, getCurrentTimeString, shiftDateString, classifyTask } from '@shared/utils/date';
 import { DateNavigator } from './components/DateNavigator';
 import { ViewTabs, type ActiveView } from './components/ViewTabs';
 import { OverdueBanner } from './components/OverdueBanner';
 import { TaskList } from './components/TaskList';
 import { TaskFormModal } from './components/TaskFormModal';
+import { DailyBriefing } from './components/DailyBriefing';
+import { FocusModeModal } from './components/FocusModeModal';
+import { DailySummaryModal } from './components/DailySummaryModal';
+import { CelebrationModal } from './components/CelebrationModal';
 
 function App() {
   const api = window.dailyflow;
@@ -21,7 +26,16 @@ function App() {
   // Engagement Engine State
   const [engagementStats, setEngagementStats] = useState<EngagementStats | null>(null);
 
-  // Modal state
+  // Phase 8 Daily Experience State
+  const [dailyBriefing, setDailyBriefing] = useState<DailyBriefingType | null>(null);
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
+  const [activeFocusTask, setActiveFocusTask] = useState<Task | null>(null);
+  const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
+  const [celebratedDates, setCelebratedDates] = useState<string[]>([]);
+
+  // Task Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -46,6 +60,18 @@ function App() {
       // Ignore background fetch error
     }
   }, [api]);
+
+  // Fetch daily briefing
+  const fetchDailyBriefing = useCallback(async () => {
+    try {
+      const res = await api.getDailyBriefing(selectedDate);
+      if (res.success && res.data) {
+        setDailyBriefing(res.data);
+      }
+    } catch {
+      // Ignore background briefing fetch error
+    }
+  }, [api, selectedDate]);
 
   // Fetch tasks based on active view
   const fetchTasks = useCallback(async () => {
@@ -106,7 +132,22 @@ function App() {
     void fetchTasks();
     void checkOverdueCount();
     void fetchEngagementStats();
-  }, [fetchTasks, checkOverdueCount, fetchEngagementStats]);
+    void fetchDailyBriefing();
+  }, [fetchTasks, checkOverdueCount, fetchEngagementStats, fetchDailyBriefing]);
+
+  // Check for 100% completion celebration once per day
+  useEffect(() => {
+    if (
+      activeView === 'today' &&
+      selectedDate === currentDateStr &&
+      tasks.length > 0 &&
+      tasks.every((t) => t.isCompleted) &&
+      !celebratedDates.includes(currentDateStr)
+    ) {
+      setIsCelebrationOpen(true);
+      setCelebratedDates((prev) => [...prev, currentDateStr]);
+    }
+  }, [activeView, selectedDate, currentDateStr, tasks, celebratedDates]);
 
   const overdueTasksCount = useMemo(() => {
     return allIncompleteTasks.filter(
@@ -133,11 +174,61 @@ function App() {
         await fetchTasks();
         await checkOverdueCount();
         await fetchEngagementStats();
+        await fetchDailyBriefing();
       } else {
         setTaskError(res.error || 'Failed to toggle task completion');
       }
     } catch (err) {
       setTaskError(err instanceof Error ? err.message : 'Error updating task');
+    }
+  };
+
+  const handleSetPrimaryFocus = async (taskId: string | null) => {
+    try {
+      const res = await api.setPrimaryFocus(taskId, selectedDate);
+      if (res.success && res.data) {
+        setDailyBriefing(res.data);
+      }
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : 'Failed to set primary focus');
+    }
+  };
+
+  const handleStartFocusMode = (task: Task) => {
+    setActiveFocusTask(task);
+    setIsFocusModalOpen(true);
+  };
+
+  const handleLogFocusSession = async (taskId: string | null, durationSeconds: number) => {
+    try {
+      await api.logFocusSession({ taskId, durationSeconds, date: selectedDate });
+      await fetchEngagementStats();
+      await fetchDailyBriefing();
+    } catch {
+      // Ignore background log error
+    }
+  };
+
+  const handleOpenSummaryModal = async () => {
+    try {
+      const res = await api.getDailySummary(selectedDate);
+      if (res.success && res.data) {
+        setDailySummary(res.data);
+        setIsSummaryModalOpen(true);
+      }
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : 'Failed to fetch daily summary');
+    }
+  };
+
+  const handleSaveReflection = async (reflection: string) => {
+    try {
+      const res = await api.saveDailyReflection(reflection, selectedDate);
+      if (res.success && res.data) {
+        setDailySummary(res.data);
+      }
+    } catch (err) {
+      setTaskError(err instanceof Error ? err.message : 'Failed to save reflection');
     }
   };
 
@@ -158,6 +249,7 @@ function App() {
         await fetchTasks();
         await checkOverdueCount();
         await fetchEngagementStats();
+        await fetchDailyBriefing();
       } else {
         setTaskError(res.error || 'Failed to delete task');
       }
@@ -189,6 +281,7 @@ function App() {
     await fetchTasks();
     await checkOverdueCount();
     await fetchEngagementStats();
+    await fetchDailyBriefing();
   };
 
   // Health verification handlers
@@ -239,7 +332,7 @@ function App() {
                 </span>
               </div>
               <p className="text-[11px] font-medium text-slate-400">
-                Timezone-Safe Core Task Management & Engagement Engine
+                Timezone-Safe Core Task Management & Daily Experience Workspace
               </p>
             </div>
           </div>
@@ -311,6 +404,17 @@ function App() {
         {/* Date Navigator - Single Source of Truth */}
         {activeView === 'today' && (
           <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        )}
+
+        {/* Phase 8 Daily Briefing & Goals Workspace */}
+        {activeView === 'today' && (
+          <DailyBriefing
+            briefing={dailyBriefing}
+            allTodayTasks={tasks}
+            onStartFocus={handleStartFocusMode}
+            onSetPrimaryFocus={handleSetPrimaryFocus}
+            onOpenSummary={handleOpenSummaryModal}
+          />
         )}
 
         {/* Task List Canvas */}
@@ -409,6 +513,37 @@ function App() {
         selectedDate={selectedDate}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSaveTask}
+      />
+
+      {/* Focus Mode Modal */}
+      <FocusModeModal
+        task={activeFocusTask}
+        isOpen={isFocusModalOpen}
+        onClose={() => setIsFocusModalOpen(false)}
+        onCompleteTask={async (taskId) => {
+          const taskToComplete = tasks.find((t) => t.id === taskId);
+          if (taskToComplete && !taskToComplete.isCompleted) {
+            await handleToggleComplete(taskToComplete);
+          }
+        }}
+        onLogFocusSession={handleLogFocusSession}
+      />
+
+      {/* Daily Summary & Reflection Modal */}
+      <DailySummaryModal
+        summary={dailySummary}
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        onSaveReflection={handleSaveReflection}
+      />
+
+      {/* Celebration Modal */}
+      <CelebrationModal
+        isOpen={isCelebrationOpen}
+        onClose={() => setIsCelebrationOpen(false)}
+        onOpenSummary={handleOpenSummaryModal}
+        streakCount={engagementStats?.state.currentStreak || 0}
+        xpEarnedToday={engagementStats?.todayLog.xpEarned || 0}
       />
     </div>
   );

@@ -2,6 +2,12 @@ import type { SystemInfoRequest, SystemInfoResponse, IpcResult } from '../shared
 import type { DatabaseStatus } from '../shared/types/database';
 import type { Task, CreateTaskDTO, UpdateTaskDTO, TaskFilter } from '../shared/types/task';
 import type { EngagementStats, AchievementProgress } from '../shared/types/engagement';
+import type {
+  DailyBriefing,
+  DailySummary,
+  FocusSession,
+  LogFocusSessionDTO,
+} from '../shared/types/dailyExperience';
 
 export interface DailyFlowAPI {
   platform: string;
@@ -20,7 +26,14 @@ export interface DailyFlowAPI {
   getEngagementStats: (date?: string) => Promise<IpcResult<EngagementStats>>;
   getAchievements: () => Promise<IpcResult<AchievementProgress[]>>;
   recalculateEngagement: (date?: string) => Promise<IpcResult<EngagementStats>>;
+  // Phase 8 Daily Experience API
+  getDailyBriefing: (date?: string) => Promise<IpcResult<DailyBriefing>>;
+  setPrimaryFocus: (taskId: string | null, date?: string) => Promise<IpcResult<DailyBriefing>>;
+  logFocusSession: (dto: LogFocusSessionDTO) => Promise<IpcResult<FocusSession>>;
+  saveDailyReflection: (reflection: string, date?: string) => Promise<IpcResult<DailySummary>>;
+  getDailySummary: (date?: string) => Promise<IpcResult<DailySummary>>;
 }
+
 
 declare global {
   interface Window {

@@ -68,7 +68,33 @@ const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  {
+    version: 3,
+    name: '003_daily_experience_schema',
+    up: (db: Database.Database) => {
+      // Extend daily_engagement_logs table with focus & reflection fields
+      db.exec(`
+        ALTER TABLE daily_engagement_logs ADD COLUMN primary_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL;
+        ALTER TABLE daily_engagement_logs ADD COLUMN daily_reflection TEXT;
+        ALTER TABLE daily_engagement_logs ADD COLUMN total_focus_minutes INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE daily_engagement_logs ADD COLUMN is_summary_reviewed INTEGER NOT NULL DEFAULT 0;
+
+        CREATE TABLE IF NOT EXISTS focus_sessions (
+          id TEXT PRIMARY KEY,
+          task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+          date TEXT NOT NULL,
+          duration_seconds INTEGER NOT NULL,
+          completed_at TEXT NOT NULL DEFAULT (datetime('now')),
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_focus_sessions_date ON focus_sessions(date);
+        CREATE INDEX IF NOT EXISTS idx_focus_sessions_task_id ON focus_sessions(task_id);
+      `);
+    },
+  },
 ];
+
 
 export function runMigrations(db: Database.Database): void {
   // Ensure schema_migrations table exists

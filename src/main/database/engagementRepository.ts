@@ -155,12 +155,15 @@ export function recalculateEngagementState(
   };
 
   const syncLogsTx = db.transaction(() => {
-    // Clear and rebuild daily logs for consistency
-    db.prepare('DELETE FROM daily_engagement_logs').run();
-
-    const insertLogStmt = db.prepare(`
+    const upsertLogStmt = db.prepare(`
       INSERT INTO daily_engagement_logs (date, tasks_scheduled, tasks_completed, is_perfect_day, xp_earned, updated_at)
       VALUES (?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(date) DO UPDATE SET
+        tasks_scheduled = excluded.tasks_scheduled,
+        tasks_completed = excluded.tasks_completed,
+        is_perfect_day = excluded.is_perfect_day,
+        xp_earned = excluded.xp_earned,
+        updated_at = datetime('now')
     `);
 
     for (const summary of taskSummaries) {
@@ -205,7 +208,7 @@ export function recalculateEngagementState(
         todayLog = logItem;
       }
 
-      insertLogStmt.run(
+      upsertLogStmt.run(
         summary.date,
         scheduledCount,
         completedCount,
@@ -231,7 +234,21 @@ export function recalculateEngagementState(
     }
   }
 
-  const finalTotalXp = accumulatedXp + achievementBonusXp;
+  // Focus session bonus XP (+15 XP per completed focus session)
+  let focusSessionXp = 0;
+  try {
+    const focusRow = db
+      .prepare('SELECT COUNT(*) as cnt FROM focus_sessions')
+      .get() as { cnt: number } | undefined;
+    if (focusRow) {
+      focusSessionXp = focusRow.cnt * 15;
+    }
+  } catch {
+    // Graceful fallback if table is not yet created
+  }
+
+  const finalTotalXp = accumulatedXp + achievementBonusXp + focusSessionXp;
+
   const levelInfo = calculateLevelInfo(finalTotalXp);
 
   // Update user_engagement table in SQLite

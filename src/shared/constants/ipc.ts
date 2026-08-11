@@ -16,10 +16,19 @@ export const IPC_CHANNELS = {
     GET_ACHIEVEMENTS: 'engagement:get-achievements',
     RECALCULATE: 'engagement:recalculate',
   },
+  DAILY_EXPERIENCE: {
+    GET_BRIEFING: 'daily:get-briefing',
+    SET_PRIMARY_FOCUS: 'daily:set-primary-focus',
+    LOG_FOCUS_SESSION: 'daily:log-focus-session',
+    SAVE_REFLECTION: 'daily:save-reflection',
+    GET_SUMMARY: 'daily:get-summary',
+  },
 } as const;
 
 export type IpcChannel =
   | (typeof IPC_CHANNELS.SYSTEM)[keyof typeof IPC_CHANNELS.SYSTEM]
   | (typeof IPC_CHANNELS.DATABASE)[keyof typeof IPC_CHANNELS.DATABASE]
   | (typeof IPC_CHANNELS.TASK)[keyof typeof IPC_CHANNELS.TASK]
-  | (typeof IPC_CHANNELS.ENGAGEMENT)[keyof typeof IPC_CHANNELS.ENGAGEMENT];
+  | (typeof IPC_CHANNELS.ENGAGEMENT)[keyof typeof IPC_CHANNELS.ENGAGEMENT]
+  | (typeof IPC_CHANNELS.DAILY_EXPERIENCE)[keyof typeof IPC_CHANNELS.DAILY_EXPERIENCE];
+

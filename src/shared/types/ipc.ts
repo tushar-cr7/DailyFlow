@@ -1,5 +1,6 @@
 export * from './database';
 export * from './task';
+export * from './dailyExperience';
 
 export interface SystemInfoRequest {
   includeEnv?: boolean;
